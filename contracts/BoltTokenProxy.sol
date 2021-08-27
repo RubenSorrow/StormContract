@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract BoltTokenProxy is Context {
+    using SafeMath for uint256;
     uint256 private initialSupply;
     uint256 private currentSupply;
     address private owner;
@@ -14,7 +16,7 @@ contract BoltTokenProxy is Context {
     address private implementationAddress;
 
     mapping(address => uint256) private balances;
-    mapping(address => mapping(address => uint256)) private allowance;
+    mapping(address => mapping(address => uint256)) private allowances;
     
     constructor(uint256 _initialSupply, uint256 _currenSupply, string memory _name, string memory _symbol, uint8 _numberOfDecimals) {
         initialSupply = _initialSupply;
@@ -30,8 +32,12 @@ contract BoltTokenProxy is Context {
         _;
     }
 
-    function setBalance(address _address, uint256 _amount) public onlyImplementation() {
-        balances[_address] = _amount;
+    function subtractFunds(address _from, uint256 _value) public onlyImplementation() {
+        balances[_from] = balances[_from].sub(_value);
+    }
+
+    function addFunds(address _to, uint256 _value) public onlyImplementation() {
+        balances[_to] = balances[_to].add(_value);
     }
 
     function getAddressOfImplementation() external view returns(address){
@@ -67,11 +73,19 @@ contract BoltTokenProxy is Context {
         return numberOfDecimals;
     }
 
-    function balanceOf(address user) external view returns(uint256) {
-        return balances[user];
+    function balanceOf(address _user) external view returns(uint256) {
+        return balances[_user];
     }
 
     function getNumberOfDecimals() external view returns(uint8) {
         return numberOfDecimals;
+    }
+
+    function allowance(address _owner, address _spender) public view returns(uint256) {
+        return allowances[_owner][_spender];
+    }
+
+    function _approve(address _owner, address _spender, uint256 _amount) public onlyImplementation() {
+        allowances[_owner][_spender] = _amount;
     }
 }

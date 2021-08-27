@@ -7,8 +7,8 @@ import "./BoltTokenProxy.sol";
     
     contract bolt is Context {
         using SafeMath for uint;
-               
-        string version = "1";
+        
+        string version = "2";
         BoltTokenProxy  private myProxy;
         
         constructor(address _addressOfTokenProxy)  {
