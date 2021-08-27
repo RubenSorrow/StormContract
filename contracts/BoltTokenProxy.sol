@@ -30,9 +30,9 @@ contract BoltTokenProxy is Context {
         _;
     }
 
-    function setBalance(address _address, uint256 _amount) public onlyImplementation() {
-        balances[_address] = _amount;
-    }
+   //function setBalance(address _address, uint256 _amount) public onlyImplementation() {
+   //    balances[_address] = _amount;
+   //}
 
     function getAddressOfImplementation() external view returns(address){
         return implementationAddress;

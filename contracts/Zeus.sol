@@ -22,14 +22,15 @@ import "./BoltTokenProxy.sol";
         
         function transfer(address _to, uint256 _value) public override returns (bool success) {
             emit Transfer(_msgSender(), _to, _value);
-            // myProxy.balances[_msgSender()] = myProxy.balances[_msgSender()].sub(_value);
-            // myProxy.balances[_to] = myProxy.balances[_to].add(_value);
+            
+             myProxy.balances[_msgSender()] = myProxy.balances[_msgSender()].sub(_value);
+             myProxy.balances[_to] = myProxy.balances[_to].add(_value);
             return true;
         }
 
         function transferFrom(address _from, address _to, uint256 _value) public override returns (bool success) {
-            // myProxy.balance[_from] = myProxy.balance[_from].sub(_value);
-            // myProxy.balance[_to]   = myProxy.balance[_to].add(_value);
+             myProxy.balance[_from] = myProxy.balance[_from].sub(_value);
+             myProxy.balance[_to]   = myProxy.balance[_to].add(_value);
             emit Transfer(_from, _to, _value);
             return true;
         }
