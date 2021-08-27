@@ -9,8 +9,8 @@ contract BoltTokenProxy is Context {
     uint256 private currentSupply;
     address private owner;
     uint8 private numberOfDecimals;
-    string private name;
-    string private symbol;
+    string private nameOfToken;
+    string private symbolOfToken;
     address private implementationAddress;
 
     mapping(address => uint256) private balances;
@@ -20,8 +20,8 @@ contract BoltTokenProxy is Context {
         initialSupply = _initialSupply;
         currentSupply = _currenSupply;
         owner = msg.sender;
-        name = _name;
-        symbol = _symbol;
+        nameOfToken = _name;
+        symbolOfToken = _symbol;
         numberOfDecimals = _numberOfDecimals;
     }
 
@@ -51,13 +51,17 @@ contract BoltTokenProxy is Context {
         return owner;
     }
 
-    function getName() external view returns(string memory) {
-        return name;
+    function name() external view returns(string memory) {
+        return nameOfToken;
     }
 
-    function getSymbol() external view returns(string memory) {
-        return symbol;
+    function symbol() external view returns(string memory) {
+        return symbolOfToken;
     }    
+
+    function decimals() external view returns(uint8) {
+        return numberOfDecimals;
+    }
 
     function balanceOf(address user) external view returns(uint256) {
         return balances[user];
