@@ -31,7 +31,7 @@ contract Zeus is Context {
         address _sender,
         address _recipient,
         uint256 _amount
-    ) public returns (bool success) {
+    ) public onlyOwnerOfProxy() returns (bool success) {
         _transfer(_sender, _recipient, _amount);
 
         uint256 currentAllowance = myProxy.allowance(_sender, _msgSender());
@@ -104,6 +104,7 @@ contract Zeus is Context {
     }
 
     event Transfer(address indexed from, address indexed to, uint256 value);
+
 
     modifier onlyOwnerOfProxy() {
         require(_msgSender() == myProxy.getOwner(), "The sender must be the owner of the proxy");
