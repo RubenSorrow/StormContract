@@ -19,10 +19,11 @@ contract Zeus is Context {
         return version;
     }
 
-    function transfer(address _sender, address _recipient, uint256 _amount)
-        public
-        returns (bool success)
-    {
+    function transfer(
+        address _sender,
+        address _recipient,
+        uint256 _amount
+    ) public returns (bool success) {
         _transfer(_sender, _recipient, _amount);
         return true;
     }
@@ -31,11 +32,14 @@ contract Zeus is Context {
         address _sender,
         address _recipient,
         uint256 _amount
-    ) public onlyOwnerOfProxy() returns (bool success) {
+    ) public onlyOwnerOfProxy returns (bool success) {
         _transfer(_sender, _recipient, _amount);
 
         uint256 currentAllowance = myProxy.allowance(_sender, _msgSender());
-        require(currentAllowance >= _amount, "ERC20: transfer amount exceeds allowance");
+        require(
+            currentAllowance >= _amount,
+            "ERC20: transfer amount exceeds allowance"
+        );
         unchecked {
             myProxy._approve(_sender, _msgSender(), _amount);
         }
@@ -43,13 +47,21 @@ contract Zeus is Context {
         return true;
     }
 
-    function _transfer(address _sender, address _recipient, uint256 _amount) internal {
+    function _transfer(
+        address _sender,
+        address _recipient,
+        uint256 _amount
+    ) private {
         require(_sender != address(0), "ERC20: sender to the zero address");
-        require(_recipient != address(0), "ERC20: receiver to the zero address");
-        require(myProxy.balanceOf(_sender) >= _amount,"ERC20: Transfer amount exceeds balance");
-        unchecked {
-            myProxy.subtractFunds(_sender, _amount);
-        }
+        require(
+            _recipient != address(0),
+            "ERC20: receiver to the zero address"
+        );
+        require(
+            myProxy.balanceOf(_sender) >= _amount,
+            "ERC20: Transfer amount exceeds balance"
+        );
+        myProxy.subtractFunds(_sender, _amount);
         myProxy.addFunds(_recipient, _amount);
 
         emit Transfer(_sender, _recipient, _amount);
@@ -105,9 +117,11 @@ contract Zeus is Context {
 
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-
     modifier onlyOwnerOfProxy() {
-        require(_msgSender() == myProxy.getOwner(), "The sender must be the owner of the proxy");
+        require(
+            _msgSender() == myProxy.getOwner(),
+            "The sender must be the owner of the proxy"
+        );
         _;
     }
 }

@@ -5,7 +5,7 @@ const zeusContractV2 = artifacts.require('../contracts/ZeusV2');
 
 module.exports = async function (deployer) {
   deployer.deploy(Migrations);
-  await deployer.deploy(proxyContract, 3050000000, 3050000000, "Bolts", "BOLT", 6).then(async () => {
+  await deployer.deploy(proxyContract, 3050000000000, 3050000000000, "Bolts", "BOLT", 6).then(async () => {
     await deployer.deploy(zeusContract, proxyContract.address);
   })
 };
