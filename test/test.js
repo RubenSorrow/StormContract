@@ -9,7 +9,7 @@
 const Zeus = artifacts.require("../build/contracts/Zeus");
 const boltTokenProxy = artifacts.require("../build/contracts/BoltTokenProxy");
 
-contract("BoltTokenProxy", () => {
+contract("BoltTokenProxy", accounts => {
 
     // it("should be 3 million coins as totalSupply", () =>
     //     boltTokenProxy.deployed()
@@ -26,15 +26,16 @@ contract("BoltTokenProxy", () => {
     it("the admin should have 1 coins", async () =>
     {
         const instance = await boltTokenProxy.deployed();
-        const balance = await instance.balanceOf("");
+        const balance = await instance.balanceOf(accounts[0]);
         assert.equal(balance.valueOf(), 1000000);
     })
 
     it("should send coins correctly", async () => {
         let zeusInstance = await Zeus.deployed();
         let proxyInstance = await boltTokenProxy.deployed();
-        const accountOne = "0x6E27D0d89AD3e93cbb3938f55a7f91e34C861732";
-        const accountTwo = "0xeac4c5732999dedd4f6c7a6318a7d5301ef6eb3c";
+        const accountOne = accounts[0];
+        const accountTwo = accounts[1];
+
 
         let balanceSender = await proxyInstance.balanceOf(accountOne);
         let balanceReceiver = await proxyInstance.balanceOf(accountTwo);
