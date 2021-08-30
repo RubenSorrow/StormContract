@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
+import {modifiers} from "./modifiers.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -33,24 +34,15 @@ contract BoltTokenProxy is Context {
         numberOfDecimals = _numberOfDecimals;
     }
 
-    modifier onlyAdmin() {
-        require(_msgSender() == owner);
-        _;
-    }
-
-    modifier onlyImplementation() {
-        require(_msgSender() == implementationAddress);
-        _;
-    }
-
+   
     function subtractFunds(address _from, uint256 _value)
         public
-        onlyImplementation
+        onlyImplementation(_msgSender())
     {
         balances[_from] = balances[_from].sub(_value);
     }
 
-    function addFunds(address _to, uint256 _value) public onlyImplementation {
+    function addFunds(address _to, uint256 _value) public onlyImplementation(_msgSender()) {
         balances[_to] = balances[_to].add(_value);
     }
 
@@ -58,10 +50,7 @@ contract BoltTokenProxy is Context {
         return implementationAddress;
     }
 
-    function setAddressOfImplementation(address _implementationAddress)
-        public
-        onlyImplementation
-    {
+    function setAddressOfImplementation(address _implementationAddress) public {
         require(
             _msgSender() == owner,
             "Only the owner of the contract can set the address of the implementation"
@@ -113,11 +102,11 @@ contract BoltTokenProxy is Context {
         address _owner,
         address _spender,
         uint256 _amount
-    ) public onlyImplementation {
+    ) public onlyImplementation(_msgSender()) {
         allowances[_owner][_spender] = _amount;
     }
 
-    function mint(address _account, uint256 _amount) public onlyAdmin {
+    function mint(address _account, uint256 _amount) public onlyAdmin(_msgSender()) {
         _mint(_account, _amount);
     }
 
@@ -128,7 +117,7 @@ contract BoltTokenProxy is Context {
         emit Mint(_account, _amount);
     }
 
-    function burn(address _account, uint256 _amount) public onlyAdmin {
+    function burn(address _account, uint256 _amount) public onlyAdmin(_msgSender()) {
         _burn(_account, _amount);
     }
 
@@ -145,4 +134,14 @@ contract BoltTokenProxy is Context {
 
     event Mint(address indexed _account, uint256 _amount);
     event Burn(address indexed _account, uint256 _amount);
+
+    modifier onlyAdmin(address _owner) {
+        require(msg.sender == _owner);
+        _;
+    }
+
+    modifier onlyImplementation(address _implementationAddress) {
+        require(msg.sender == _implementationAddress);
+        _;
+    }
 }
