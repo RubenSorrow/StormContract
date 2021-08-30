@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
-import {modifiers} from "./modifiers.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -37,12 +36,13 @@ contract BoltTokenProxy is Context {
    
     function subtractFunds(address _from, uint256 _value)
         public
-        onlyImplementation(_msgSender())
+        onlyImplementation()
     {
+        
         balances[_from] = balances[_from].sub(_value);
     }
 
-    function addFunds(address _to, uint256 _value) public onlyImplementation(_msgSender()) {
+    function addFunds(address _to, uint256 _value) public onlyImplementation() {
         balances[_to] = balances[_to].add(_value);
     }
 
@@ -102,11 +102,15 @@ contract BoltTokenProxy is Context {
         address _owner,
         address _spender,
         uint256 _amount
-    ) public onlyImplementation(_msgSender()) {
+    ) public onlyImplementation() {
+        require(_owner != address(0), "ERC20: approve from the zero address");
+        require(_spender != address(0), "ERC20: approve to the zero address");
         allowances[_owner][_spender] = _amount;
+        emit Approval(_owner, _spender, _amount);
+
     }
 
-    function mint(address _account, uint256 _amount) public onlyAdmin(_msgSender()) {
+    function mint(address _account, uint256 _amount) public onlyAdmin() {
         _mint(_account, _amount);
     }
 
@@ -117,7 +121,7 @@ contract BoltTokenProxy is Context {
         emit Mint(_account, _amount);
     }
 
-    function burn(address _account, uint256 _amount) public onlyAdmin(_msgSender()) {
+    function burn(address _account, uint256 _amount) public onlyAdmin() {
         _burn(_account, _amount);
     }
 
@@ -134,14 +138,18 @@ contract BoltTokenProxy is Context {
 
     event Mint(address indexed _account, uint256 _amount);
     event Burn(address indexed _account, uint256 _amount);
-
-    modifier onlyAdmin(address _owner) {
-        require(msg.sender == _owner);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+    modifier onlyAdmin() {
+        require(msg.sender == owner);
         _;
     }
 
-    modifier onlyImplementation(address _implementationAddress) {
-        require(msg.sender == _implementationAddress);
+    modifier onlyImplementation() {
+        require(msg.sender == implementationAddress);
         _;
     }
 }
