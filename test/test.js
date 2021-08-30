@@ -33,4 +33,28 @@ contract("BoltTokenProxy", account => {
                     )
                 })
     )
+
+    it("the symbol should be BOLT", () =>
+            boltTokenProxy.deployed()
+                .then(instance => instance.symbol())
+                .then(symbolOfTheToken => {
+                    assert.equal(
+                        symbolOfTheToken,
+                        "BOLT",
+                        "The symbol wasn't BOLT"
+                    )
+                })
+    )
+
+    it("the balance of " + account[0] + " should be 0", () => 
+            boltTokenProxy.deployed()
+                .then(instance => instance.balanceOf(account[0]))
+                .then(balanceOf => {
+                    assert.equal(
+                        balanceOf,
+                        0,
+                        "The balance of " + account[0] + " wasn't 0"
+                    )
+                })
+    )
 })

@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./BoltTokenProxy.sol";
     
-    contract bolt is Context {
+    contract Zeus is Context {
         using SafeMath for uint;
                
         string version = "1";
