@@ -26,7 +26,7 @@ contract("BoltTokenProxy", () => {
     it("the admin should have 1 coins", async () =>
     {
         const instance = await boltTokenProxy.deployed();
-        const balance = await instance.balanceOf("0x6E27D0d89AD3e93cbb3938f55a7f91e34C861732");
+        const balance = await instance.balanceOf("");
         assert.equal(balance.valueOf(), 1000000);
     })
 
@@ -42,10 +42,9 @@ contract("BoltTokenProxy", () => {
         const amount = 1000000;
         let accountOneStartingBalance = balanceSender.toNumber();
         let accountTwoStartingBalance = balanceReceiver.toNumber();
-
-        await zeusInstance.transfer(accountOne, accountTwo, amount, {
-            from: accountOne
-        })
+        await proxyInstance.setAddressOfImplementation(zeusInstance.address);
+        await zeusInstance.transfer(accountOne, accountTwo, amount).catch(err => console.log(err))
+        
 
         balanceSender = await proxyInstance.balanceOf(accountOne);
         balanceReceiver = await proxyInstance.balanceOf(accountTwo);
