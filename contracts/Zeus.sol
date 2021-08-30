@@ -4,16 +4,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./BoltTokenProxy.sol";
-    
-    contract Zeus is Context {
-        using SafeMath for uint;
-               
-        string version = "1";
-        BoltTokenProxy  private myProxy;
-        
-        constructor(address _addressOfTokenProxy)  {
-            myProxy = BoltTokenProxy(_addressOfTokenProxy);    
-        }
 
 contract Zeus is Context {
     using SafeMath for uint256;
