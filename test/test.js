@@ -11,18 +11,6 @@ const boltTokenProxy = artifacts.require("../build/contracts/BoltTokenProxy");
 
 contract("BoltTokenProxy", accounts => {
 
-    // it("should be 3 million coins as totalSupply", () =>
-    //     boltTokenProxy.deployed()
-    //         .then(instance => instance.totalSupply())
-    //         .then(totalSupply => {
-    //             assert.equal(
-    //                 totalSupply,
-    //                 3050000000,
-    //                 "There wasn't 3 million coins as totalSupply"
-    //             )
-    //         })
-    // )
-
     it("the admin should have 1 coins", async () =>
     {
         const instance = await boltTokenProxy.deployed();
@@ -65,4 +53,5 @@ contract("BoltTokenProxy", accounts => {
             "Amount wasn't correctly given to the account"
         )
     })
+
 })

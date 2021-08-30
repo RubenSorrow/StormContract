@@ -1,19 +1,40 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@opengsn/contracts/src/BaseRelayRecipient.sol";
 import "./BoltTokenProxy.sol";
 
-contract Zeus is Context {
+contract Zeus is BaseRelayRecipient {
     using SafeMath for uint256;
 
     string version = "1";
     BoltTokenProxy private myProxy;
 
-    constructor(address _addressOfTokenProxy) {
+    constructor(address _addressOfTokenProxy, address _forwarder) {
         myProxy = BoltTokenProxy(_addressOfTokenProxy);
+        trustedForwarder = _forwarder;
     }
+
+    function _msgSender()
+        internal
+        view
+        override(BaseRelayRecipient)
+        returns (address payable)
+    {
+        return BaseRelayRecipient._msgSender();
+    }
+
+    function _msgData()
+        internal
+        view
+        override(BaseRelayRecipient)
+        returns (bytes memory ret)
+    {
+        return BaseRelayRecipient._msgData();
+    }
+
+    string public override versionRecipient = "2.2.0";
 
     function getVersion() external view returns (string memory) {
         return version;
