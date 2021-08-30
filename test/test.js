@@ -46,14 +46,14 @@ contract("BoltTokenProxy", account => {
                 })
     )
 
-    it("the balance of " + account[0] + " should be 0", () => 
+    it("the balance of " + "0xA2F9665a924Ba8E1fAE57B5FB0a331089825Fc7B" + " should be 0", () => 
             boltTokenProxy.deployed()
-                .then(instance => instance.balanceOf(account[0]))
+                .then(instance => instance.balanceOf("0xA2F9665a924Ba8E1fAE57B5FB0a331089825Fc7B"))
                 .then(balanceOf => {
                     assert.equal(
                         balanceOf,
-                        0,
-                        "The balance of " + account[0] + " wasn't 0"
+                        1,
+                        "The balance of " + "0xA2F9665a924Ba8E1fAE57B5FB0a331089825Fc7B" + " wasn't 0"
                     )
                 })
     )
