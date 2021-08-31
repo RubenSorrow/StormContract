@@ -10,14 +10,14 @@ const Zeus = artifacts.require("../build/contracts/Zeus");
 const boltTokenProxy = artifacts.require("../build/contracts/BoltTokenProxy");
 
 contract("BoltTokenProxy", accounts => {
-
+//BalaceOf Test.
     it("the admin should have 1 coins", async () =>
     {
         const instance = await boltTokenProxy.deployed();
         const balance = await instance.balanceOf(accounts[0]);
         assert.equal(balance.valueOf(), 1000000);
     })
-
+//Transfer Test.
     it("should send coins correctly", async () => {
         let zeusInstance = await Zeus.deployed();
         let proxyInstance = await boltTokenProxy.deployed();

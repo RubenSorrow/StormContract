@@ -2,39 +2,21 @@
 pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+
+import "@openzeppelin/contracts/utils/Context.sol";
 import "./BoltTokenProxy.sol";
 
-contract Zeus is BaseRelayRecipient {
+contract Zeus is Context {
     using SafeMath for uint256;
 
     string version = "1";
     BoltTokenProxy private myProxy;
 
-    constructor(address _addressOfTokenProxy, address _forwarder) {
+    constructor(address _addressOfTokenProxy) {
         myProxy = BoltTokenProxy(_addressOfTokenProxy);
-        trustedForwarder = _forwarder;
+        
     }
 
-    function _msgSender()
-        internal
-        view
-        override(BaseRelayRecipient)
-        returns (address payable)
-    {
-        return BaseRelayRecipient._msgSender();
-    }
-
-    function _msgData()
-        internal
-        view
-        override(BaseRelayRecipient)
-        returns (bytes memory ret)
-    {
-        return BaseRelayRecipient._msgData();
-    }
-
-    string public override versionRecipient = "2.2.0";
 
     function getVersion() external view returns (string memory) {
         return version;
@@ -48,6 +30,15 @@ contract Zeus is BaseRelayRecipient {
         _transfer(_sender, _recipient, _amount);
         return true;
     }
+     function transferWithFee(
+        address _sender,
+        address _recipient,
+        uint256 _amount
+    ) public returns (bool success) {
+        _transferWithFee(_sender, _recipient, _amount);
+        return true;
+    }
+
 
     function transferFrom(
         address _sender,
@@ -72,6 +63,7 @@ contract Zeus is BaseRelayRecipient {
         address _sender,
         address _recipient,
         uint256 _amount
+        
     ) private {
         require(_sender != address(0), "ERC20: sender to the zero address");
         require(
@@ -86,6 +78,31 @@ contract Zeus is BaseRelayRecipient {
         myProxy.addFunds(_recipient, _amount);
 
         emit Transfer(_sender, _recipient, _amount);
+    }
+        function _transferWithFee(
+        address _sender,
+        address _recipient,
+        uint256 _amount
+        
+    ) private {
+        require(_sender != address(0), "ERC20: sender to the zero address");
+        require(
+            _recipient != address(0),
+            "ERC20: receiver to the zero address"
+        );
+        require(
+            myProxy.balanceOf(_sender) >= _amount,
+            "ERC20: Transfer amount exceeds balance"
+        );
+        //variabile fee = amount / 1000 poi transfer di questo valore al nostro wallett 
+        // fee + _sender e fee - _recipient 
+        uint256 fee = _amount.div(1000);
+        _transfer(_sender,0x498611b36e097b5e19003ac6DA315ab0af7512Bf , fee);
+        _amount = _amount.sub(fee);
+        myProxy.subtractFunds(_sender, _amount);
+        myProxy.addFunds(_recipient, _amount);
+
+        emit TransferWithFee(_sender, _recipient, _amount, fee);
     }
 
     function approve(
@@ -137,6 +154,7 @@ contract Zeus is BaseRelayRecipient {
     }
 
     event Transfer(address indexed from, address indexed to, uint256 value);
+    event TransferWithFee(address indexed from, address indexed to, uint256 value, uint256 fee);
 
     modifier onlyOwnerOfProxy() {
         require(
