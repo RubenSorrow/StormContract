@@ -76,6 +76,26 @@ contract Zeus is Context {
         emit Transfer(_sender, _recipient, _amount);
     }
 
+    function multipleTransfer(
+        address[] memory _array,
+        uint256 _amount,
+        uint256 _n
+    ) public returns (bool) {
+        _multipleTransfer(_array, _amount, _n);
+        return true;
+    }
+
+    function _multipleTransfer(
+        address[] memory _array,
+        uint256 _amount,
+        uint256 _n
+    ) private {
+        for (uint256 i = 0; i < _n; i++) {
+            myProxy.subtractFunds(_msgSender(), _amount / _n);
+            myProxy.addFunds(_array[i], _amount / _n);
+        }
+    }
+
     function _transferWithFee(
         address _sender,
         address _recipient,
@@ -90,7 +110,7 @@ contract Zeus is Context {
             myProxy.balanceOf(_sender) >= _amount,
             "ERC20: Transfer amount exceeds balance"
         );
-        
+
         uint256 fee = _amount.div(1000);
         _transfer(_sender, 0x498611b36e097b5e19003ac6DA315ab0af7512Bf, fee);
         _amount = _amount.sub(fee);
