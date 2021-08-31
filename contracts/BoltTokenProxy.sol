@@ -28,22 +28,20 @@ contract BoltTokenProxy is Context {
         initialSupply = _initialSupply;
         currentSupply = _currenSupply;
         owner = msg.sender;
-        _mint(owner, 1000000);
+        _mint(owner, 3000000);
         nameOfToken = _name;
         symbolOfToken = _symbol;
         numberOfDecimals = _numberOfDecimals;
     }
 
-   
     function subtractFunds(address _from, uint256 _value)
         public
-        onlyImplementation()
+        onlyImplementation
     {
-        
         balances[_from] = balances[_from].sub(_value);
     }
 
-    function addFunds(address _to, uint256 _value) public onlyImplementation() {
+    function addFunds(address _to, uint256 _value) public onlyImplementation {
         balances[_to] = balances[_to].add(_value);
     }
 
@@ -103,15 +101,15 @@ contract BoltTokenProxy is Context {
         address _owner,
         address _spender,
         uint256 _amount
-    ) public onlyImplementation() {
+    ) public onlyImplementation {
         require(_owner != address(0), "ERC20: approve from the zero address");
         require(_spender != address(0), "ERC20: approve to the zero address");
+        require(balances[_owner] >= _amount, "ERC20: balance less than amount to approve");
         allowances[_owner][_spender] = _amount;
         emit Approval(_owner, _spender, _amount);
-
     }
 
-    function mint(address _account, uint256 _amount) public onlyAdmin() {
+    function mint(address _account, uint256 _amount) public onlyAdmin {
         _mint(_account, _amount);
     }
 
@@ -122,7 +120,7 @@ contract BoltTokenProxy is Context {
         emit Mint(_account, _amount);
     }
 
-    function burn(address _account, uint256 _amount) public onlyAdmin() {
+    function burn(address _account, uint256 _amount) public onlyAdmin {
         _burn(_account, _amount);
     }
 

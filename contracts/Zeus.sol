@@ -2,7 +2,6 @@
 pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import "@openzeppelin/contracts/utils/Context.sol";
 import "./BoltTokenProxy.sol";
 
@@ -14,9 +13,7 @@ contract Zeus is Context {
 
     constructor(address _addressOfTokenProxy) {
         myProxy = BoltTokenProxy(_addressOfTokenProxy);
-        
     }
-
 
     function getVersion() external view returns (string memory) {
         return version;
@@ -26,11 +23,12 @@ contract Zeus is Context {
         address _sender,
         address _recipient,
         uint256 _amount
-    ) public returns (bool success) {
+    ) public onlyOwnerOfProxy returns (bool success) {
         _transfer(_sender, _recipient, _amount);
         return true;
     }
-     function transferWithFee(
+
+    function transferWithFee(
         address _sender,
         address _recipient,
         uint256 _amount
@@ -38,7 +36,6 @@ contract Zeus is Context {
         _transferWithFee(_sender, _recipient, _amount);
         return true;
     }
-
 
     function transferFrom(
         address _sender,
@@ -63,7 +60,6 @@ contract Zeus is Context {
         address _sender,
         address _recipient,
         uint256 _amount
-        
     ) private {
         require(_sender != address(0), "ERC20: sender to the zero address");
         require(
@@ -79,11 +75,11 @@ contract Zeus is Context {
 
         emit Transfer(_sender, _recipient, _amount);
     }
-        function _transferWithFee(
+
+    function _transferWithFee(
         address _sender,
         address _recipient,
         uint256 _amount
-        
     ) private {
         require(_sender != address(0), "ERC20: sender to the zero address");
         require(
@@ -94,10 +90,9 @@ contract Zeus is Context {
             myProxy.balanceOf(_sender) >= _amount,
             "ERC20: Transfer amount exceeds balance"
         );
-        //variabile fee = amount / 1000 poi transfer di questo valore al nostro wallett 
-        // fee + _sender e fee - _recipient 
+        
         uint256 fee = _amount.div(1000);
-        _transfer(_sender,0x498611b36e097b5e19003ac6DA315ab0af7512Bf , fee);
+        _transfer(_sender, 0x498611b36e097b5e19003ac6DA315ab0af7512Bf, fee);
         _amount = _amount.sub(fee);
         myProxy.subtractFunds(_sender, _amount);
         myProxy.addFunds(_recipient, _amount);
@@ -118,6 +113,10 @@ contract Zeus is Context {
         address _spender,
         uint256 _amount
     ) public returns (bool) {
+        require(
+            myProxy.balanceOf(_owner) > _amount,
+            "ERC20: sender does not have enough money"
+        );
         _increaseAllowance(_owner, _spender, _amount);
         return true;
     }
@@ -136,6 +135,7 @@ contract Zeus is Context {
         address _spender,
         uint256 _amount
     ) public returns (bool) {
+        require(_amount >= 0, "ERC20: sender does not have enough money");
         _decreaseAllowance(_owner, _spender, _amount);
         return true;
     }
@@ -154,7 +154,12 @@ contract Zeus is Context {
     }
 
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event TransferWithFee(address indexed from, address indexed to, uint256 value, uint256 fee);
+    event TransferWithFee(
+        address indexed from,
+        address indexed to,
+        uint256 value,
+        uint256 fee
+    );
 
     modifier onlyOwnerOfProxy() {
         require(
