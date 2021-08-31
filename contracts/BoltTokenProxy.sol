@@ -27,7 +27,7 @@ contract BoltTokenProxy is Context {
     ) {
         initialSupply = _initialSupply;
         currentSupply = _currenSupply;
-        owner = msg.sender;
+        owner = _msgSender();
         _mint(owner, 3000000);
         nameOfToken = _name;
         symbolOfToken = _symbol;

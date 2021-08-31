@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
+//Check veloce delle ownership
+//Mintare una quantita', fare addFund, controllare che quanto ha l'admin sia giusta, controllare che 
+//la percentuale mintata sia giusta 
+//Controllo del withdraw 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
@@ -15,16 +19,16 @@ contract PerpetualProxy is Ownable {
 
     constructor(
         uint256 _initialReserve,
-        uint8 _percentageOfInterest,
+        uint256 _percentageOfInterest,
         uint256 _antiDumpingPercentage,
-        address _beneficiary,
-        address _addressOfLogicImplementation
+        address _beneficiary
+        // address _addressOfLogicImplementation
     ) {
         antiDumpingPercentage = _antiDumpingPercentage;
         reserve = _initialReserve;
         percentageOfInterest = _percentageOfInterest;
         beneficiary = _beneficiary;
-        addressOfLogicImplementation = _addressOfLogicImplementation;
+        // addressOfLogicImplementation = _addressOfLogicImplementation;
     }
 
     function getAddressOfLogicImplementation() public view returns(address) {
@@ -39,7 +43,7 @@ contract PerpetualProxy is Ownable {
         return beneficiary;
     }
 
-    function changeBeneficiary(address _newBeneficiary) public onlyBeneficiary(_newBeneficiary) {
+    function changeBeneficiary(address _newBeneficiary) public onlyBeneficiary(_msgSender()) {
         beneficiary = _newBeneficiary;
     }
 
