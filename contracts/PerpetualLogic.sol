@@ -83,7 +83,7 @@ contract PerpetualLogic is Ownable {
         Only the beneficiary of the contract itself can give out the benificiary role.
         Storm team has no direct manage of the funds locked inside the contract
     */
-    function withdraw(uint256 _amount) public onlyOwner {
+    function withdraw(uint256 _amount) public onlyBeneficiary() {
         _withdraw(_amount);
     }
 
@@ -135,9 +135,9 @@ contract PerpetualLogic is Ownable {
             totalSupply.div(100).mul(perpetualProxy.getAntiDumpingPercentage());
     }
 
-    modifier onlyBeneficiary(address _beneficiary) {
+    modifier onlyBeneficiary() {
         require(
-            perpetualProxy.getBeneficiary() == _beneficiary,
+            perpetualProxy.getBeneficiary() == _msgSender(),
             "Only the beneficiary can call this function"
         );
         _;

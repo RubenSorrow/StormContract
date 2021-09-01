@@ -37,10 +37,6 @@ contract PerpetualProxy is Ownable {
         return addressOfBoltTokenProxy;
     }
 
-    function setaddressOfBoltTokenProxy(address _newAddress) public onlyOwner {
-        addressOfBoltTokenProxy = _newAddress;
-    }
-
     function getAddressOfLogicImplementation() public view returns(address) {
         return addressOfLogicImplementation;
     }
