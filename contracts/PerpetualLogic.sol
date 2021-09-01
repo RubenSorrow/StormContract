@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -15,6 +15,10 @@ contract PerpetualLogic is Ownable {
     using SafeMath for uint8;
     using Address for address;
 
+    // ## EVENTS ##
+    event SetlogicImplementationOfZeus(address indexed _logicImplementationOfZeus);
+
+    // ## GLOBAL VARIABLES ##
     uint256 private amountOfTokensSentDaily;
     uint256 private lastTimestamp;
     bool private didSendTokenToday = false;
@@ -26,6 +30,16 @@ contract PerpetualLogic is Ownable {
     Zeus private zeusContract;
     PerpetualProxy private perpetualProxy;
 
+    // ## MODIFIERS ##
+    modifier onlyBeneficiary() {
+        require(
+            perpetualProxy.getBeneficiary() == _msgSender(),
+            "Only the beneficiary can call this function"
+        );
+        _;
+    }
+
+    // ## CONSTRUCTOR ##
     constructor(
         address _addressOfProxyImplementationOfZeus,
         address _logicImplementationOfZeus,
@@ -39,38 +53,33 @@ contract PerpetualLogic is Ownable {
         perpetualProxy = PerpetualProxy(addressOfProxyPerpetual);
     }
 
+    // ## PUBLIC FUNCTIONS ##
+    // # GET #
     function getlogicImplementationOfZeus() public view returns (address) {
         return logicImplementationOfZeus;
     }
 
+    function getTimeStamp() public view returns (uint256) {
+        return block.timestamp;
+    }
+
+    // ## PUBLIC FUNCTIONS (ONLY OWNER) ##
+    // # SET #
     function setlogicImplementationOfZeus(address _logicImplementationOfZeus)
         public
         onlyOwner
     {
         logicImplementationOfZeus = _logicImplementationOfZeus;
+
+        emit SetlogicImplementationOfZeus(_logicImplementationOfZeus);
     }
 
+    //ADD FUNDS
     function addFunds() public onlyOwner {
         _addFunds();
     }
 
-    function _addFunds() private {
-        //Check se il balance di questo contratto e' minore dello 0.0025% della supply totale
-        uint256 expectedBalanceOfPerpetual = boltTokenProxy.totalSupply()
-            .mul(perpetualProxy.getPercentageOfInterest())
-            .div(10**8);
-        if (
-            expectedBalanceOfPerpetual >
-            boltTokenProxy.balanceOf(addressOfProxyPerpetual)
-        ) {
-            zeusContract.transfer(
-                _msgSender(),
-                address(addressOfProxyPerpetual),
-                expectedBalanceOfPerpetual.sub(boltTokenProxy.balanceOf(addressOfProxyPerpetual))
-            );
-        }
-    }
-
+    // ## PUBLIC FUNCTIONS (ONLY BENEFICIARY)
     /*
         Everytime a withdraw is done the percentage of interest of the perpetual contract is reduced by 
         the amount: percentage of tokens transferred related to the total reserve of the perpetual.
@@ -83,8 +92,36 @@ contract PerpetualLogic is Ownable {
         Only the beneficiary of the contract itself can give out the benificiary role.
         Storm team has no direct manage of the funds locked inside the contract
     */
-    function withdraw(uint256 _amount) public onlyBeneficiary() {
+    function withdraw(uint256 _amount) public onlyBeneficiary {
         _withdraw(_amount);
+    }
+
+    // ## PRIVATE FUNCTIONS ##
+    //Calculate the 5% of the totalSupply of bolts
+    function getPercentageOfTotalSupply() private view returns (uint256) {
+        uint256 totalSupply = boltTokenProxy.totalSupply();
+        return
+            totalSupply.div(100).mul(perpetualProxy.getAntiDumpingPercentage());
+    }
+
+    function _addFunds() private {
+        //Check se il balance di questo contratto e' minore dello 0.0025% della supply totale
+        uint256 expectedBalanceOfPerpetual = boltTokenProxy
+            .totalSupply()
+            .mul(perpetualProxy.getPercentageOfInterest())
+            .div(10**8);
+        if (
+            expectedBalanceOfPerpetual >
+            boltTokenProxy.balanceOf(addressOfProxyPerpetual)
+        ) {
+            zeusContract.transfer(
+                _msgSender(),
+                address(addressOfProxyPerpetual),
+                expectedBalanceOfPerpetual.sub(
+                    boltTokenProxy.balanceOf(addressOfProxyPerpetual)
+                )
+            );
+        }
     }
 
     function _withdraw(uint256 _amount) private {
@@ -122,24 +159,5 @@ contract PerpetualLogic is Ownable {
     function start24HTimer() private {
         lastTimestamp = getTimeStamp();
         didSendTokenToday = true;
-    }
-
-    function getTimeStamp() public view returns (uint256) {
-        return block.timestamp;
-    }
-
-    //Calculate the 5% of the totalSupply of bolts
-    function getPercentageOfTotalSupply() private view returns (uint256) {
-        uint256 totalSupply = boltTokenProxy.totalSupply();
-        return
-            totalSupply.div(100).mul(perpetualProxy.getAntiDumpingPercentage());
-    }
-
-    modifier onlyBeneficiary() {
-        require(
-            perpetualProxy.getBeneficiary() == _msgSender(),
-            "Only the beneficiary can call this function"
-        );
-        _;
     }
 }

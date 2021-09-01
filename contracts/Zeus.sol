@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
@@ -8,29 +8,122 @@ import "./PerpetualProxy.sol";
 contract Zeus is Context {
     using SafeMath for uint256;
 
+    // ## EVENTS ##
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event TransferWithFee(
+        address indexed _from,
+        address indexed _to,
+        uint256 _value,
+        uint256 _fee
+    );
+    event SetPerpetualProxyAddress(address indexed _newAddress);
+
+    // ## GLOBAL VARIABLES ##
     address private perpetualProxyAddress;
     string version = "1";
     BoltTokenProxy private myProxy;
     PerpetualProxy private perpetualProxy;
 
+    // ## MODFIERS ##
+    modifier onlyOwnerOrPerpetuals() {
+        require(
+            _msgSender() == myProxy.getOwner() ||
+                myProxy.isTheAddressAPerpetual(_msgSender()),
+            "The sender must be either the owner of the proxy or a perpetual contract"
+        );
+        _;
+    }
 
+    modifier onlyOwnerOfProxy() {
+        require(
+            _msgSender() == myProxy.getOwner(),
+            "The sender must be the owner of the proxy"
+        );
+        _;
+    }
+
+    // ## CONSTRUCTOR ##
     constructor(address _addressOfTokenProxy) {
         myProxy = BoltTokenProxy(_addressOfTokenProxy);
     }
 
-    function setPerpetualProxyAddress(address _newAddress) public onlyOwnerOfProxy {
-        perpetualProxyAddress = _newAddress;
-        perpetualProxy = PerpetualProxy(perpetualProxyAddress);
+    // ## PUBLIC FUNCTIONS ##
+    //TRANSFER WITH FEE
+    function transferWithFee(address _recipient, uint256 _amount)
+        public
+        returns (bool success)
+    {
+        _transferWithFee(_msgSender(), _recipient, _amount);
+        return true;
     }
 
-    function getPerpetualProxyAddress() public view returns(address) {
+    //APPROVE
+    function approve(
+        address _owner,
+        address _spender,
+        uint256 _amount
+    ) public {
+        myProxy._approve(_owner, _spender, _amount);
+    }
+
+    //INCREASE ALLOWANCE
+    function increaseAllowance(
+        address _owner,
+        address _spender,
+        uint256 _amount
+    ) public returns (bool) {
+        require(
+            myProxy.balanceOf(_owner) > _amount,
+            "ERC20: sender does not have enough money"
+        );
+        _increaseAllowance(_owner, _spender, _amount);
+        return true;
+    }
+
+    //DECREASE ALLOWANCE
+    function decreaseAllowance(
+        address _owner,
+        address _spender,
+        uint256 _amount
+    ) public returns (bool) {
+        require(_amount >= 0, "ERC20: sender does not have enough money");
+        _decreaseAllowance(_owner, _spender, _amount);
+        return true;
+    }
+
+    //MULTIPLE TRANSFER
+    /*function multipleTransfer(
+        address[] memory _array,
+        uint256 _amount,
+        uint256 _n
+    ) public returns (bool) {
+        _multipleTransfer(_array, _amount, _n);
+        return true;
+    }*/
+
+    // # GET #
+    function getPerpetualProxyAddress() public view returns (address) {
         return perpetualProxyAddress;
     }
 
-    function getVersion() external view returns (string memory) {
+    function getVersion() public view returns (string memory) {
         return version;
     }
 
+    // ## PUBLIC FUNCTIONS (ONLY OWNER OF PROXY) ##
+    // # SET #
+    function setPerpetualProxyAddress(address _newAddress)
+        public
+        onlyOwnerOfProxy
+    {
+        perpetualProxyAddress = _newAddress;
+        perpetualProxy = PerpetualProxy(perpetualProxyAddress);
+
+        emit SetPerpetualProxyAddress(_newAddress);
+    }
+
+    // ## PUBLIC FUNCTIONS (ONLY OWNER OR PERPETUALS) ##
+    //TRANSFER
     function transfer(
         address _sender,
         address _recipient,
@@ -40,15 +133,7 @@ contract Zeus is Context {
         return true;
     }
 
-    function transferWithFee(
-        address _sender,
-        address _recipient,
-        uint256 _amount
-    ) public returns (bool success) {
-        _transferWithFee(_sender, _recipient, _amount);
-        return true;
-    }
-
+    //TRANSFER FROM
     function transferFrom(
         address _sender,
         address _recipient,
@@ -68,6 +153,8 @@ contract Zeus is Context {
         return true;
     }
 
+    // ## PRIVATE FUNCTIONS ##
+    //_TRANSFER
     function _transfer(
         address _sender,
         address _recipient,
@@ -88,26 +175,7 @@ contract Zeus is Context {
         emit Transfer(_sender, _recipient, _amount);
     }
 
-    /*function multipleTransfer(
-        address[] memory _array,
-        uint256 _amount,
-        uint256 _n
-    ) public returns (bool) {
-        _multipleTransfer(_array, _amount, _n);
-        return true;
-    }*/
-
-    function _multipleTransfer(
-        address[] memory _array,
-        uint256 _amount,
-        uint256 _n
-    ) private {
-        for (uint256 i = 0; i < _n; i++) {
-            myProxy.subtractFunds(_msgSender(), _amount / _n);
-            myProxy.addFunds(_array[i], _amount / _n);
-        }
-    }
-
+    //_TRANSFER WITH FEE
     function _transferWithFee(
         address _sender,
         address _recipient,
@@ -132,51 +200,22 @@ contract Zeus is Context {
         emit TransferWithFee(_sender, _recipient, _amount, fee);
     }
 
-    function approve(
-        address _owner,
-        address _spender,
-        uint256 _amount
-    ) public {
-        myProxy._approve(_owner, _spender, _amount);
-    }
-
-    function increaseAllowance(
-        address _owner,
-        address _spender,
-        uint256 _amount
-    ) public returns (bool) {
-        require(
-            myProxy.balanceOf(_owner) > _amount,
-            "ERC20: sender does not have enough money"
-        );
-        _increaseAllowance(_owner, _spender, _amount);
-        return true;
-    }
-
+    //_INCREASE ALLOWANCE
     function _increaseAllowance(
         address _owner,
         address _spender,
         uint256 _amount
-    ) internal {
+    ) private {
         uint256 currentAllowance = myProxy.allowance(_owner, _spender);
         myProxy._approve(_owner, _spender, currentAllowance + _amount);
     }
 
-    function decreaseAllowance(
-        address _owner,
-        address _spender,
-        uint256 _amount
-    ) public returns (bool) {
-        require(_amount >= 0, "ERC20: sender does not have enough money");
-        _decreaseAllowance(_owner, _spender, _amount);
-        return true;
-    }
-
+    //_DECREASE ALLOWANCE
     function _decreaseAllowance(
         address _owner,
         address _spender,
         uint256 _amount
-    ) internal {
+    ) private {
         uint256 currentAllowance = myProxy.allowance(_owner, _spender);
         require(
             currentAllowance >= _amount,
@@ -185,27 +224,14 @@ contract Zeus is Context {
         myProxy._approve(_owner, _spender, currentAllowance - _amount);
     }
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event TransferWithFee(
-        address indexed from,
-        address indexed to,
-        uint256 value,
-        uint256 fee
-    );
-
-    modifier onlyOwnerOrPerpetuals() {
-        require(
-            _msgSender() == myProxy.getOwner() || myProxy.isTheAddressAPerpetual(_msgSender()),
-            "The sender must be either the owner of the proxy or a perpetual contract"
-        );
-        _;
-    }
-
-    modifier onlyOwnerOfProxy() {
-        require(
-            _msgSender() == myProxy.getOwner(),
-            "The sender must be the owner of the proxy"
-        );
-        _;
-    }
+    /*function _multipleTransfer(
+        address[] memory _array,
+        uint256 _amount,
+        uint256 _n
+    ) private {
+        for (uint256 i = 0; i < _n; i++) {
+            myProxy.subtractFunds(_msgSender(), _amount / _n);
+            myProxy.addFunds(_array[i], _amount / _n);
+        }
+    }*/
 }

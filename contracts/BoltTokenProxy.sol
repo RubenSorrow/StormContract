@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.7;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
@@ -7,6 +7,19 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract BoltTokenProxy is Context {
     using SafeMath for uint256;
+
+    // ## EVENTS ##
+    event Mint(address indexed _account, uint256 _amount);
+    event Burn(address indexed _account, uint256 _amount);
+    event Approval(
+        address indexed _owner,
+        address indexed _spender,
+        uint256 _value
+    );
+    event SetAddressOfImplementation(address indexed _implementationAddress);
+    event AddPerpetualAddress(address indexed _newAddress);
+
+    // ## GLOBAL VARIABLES ##
     uint256 private initialSupply;
     uint256 private currentSupply;
     uint256 private totalMintedToday;
@@ -21,8 +34,30 @@ contract BoltTokenProxy is Context {
     mapping(address => mapping(address => uint256)) private allowances;
 
     mapping(address => bool) private isPerpetualAddress;
-    
 
+    // ## MODIFIERS ##
+    modifier onlyOwner() {
+        require(
+            msg.sender == owner,
+            "Only the owner of the contract can do this"
+        );
+        _;
+    }
+
+    modifier onlyImplementation() {
+        require(msg.sender == implementationAddress);
+        _;
+    }
+
+    modifier oneTimeADay() {
+        require(
+            block.timestamp.sub(lastTimestamp) < 1 days,
+            "this function can be called just once per day"
+        );
+        _;
+    }
+
+    // ## CONSTRUCTOR ##
     constructor(
         uint256 _initialSupply,
         uint256 _currenSupply,
@@ -39,12 +74,42 @@ contract BoltTokenProxy is Context {
         numberOfDecimals = _numberOfDecimals;
     }
 
-    function addPerpetualAddress(address _newAddress) public onlyOwner {
-        _addPerpetualAddress(_newAddress);
+    // ## PUBLIC FUNCTIONS ##
+    // # GET #
+    function name() public view returns (string memory) {
+        return nameOfToken;
     }
 
-    function _addPerpetualAddress(address _newAddress) private {
-        isPerpetualAddress[_newAddress] = true;
+    function symbol() public view returns (string memory) {
+        return symbolOfToken;
+    }
+
+    function decimals() public view returns (uint8) {
+        return numberOfDecimals;
+    }
+
+    function getOwner() public view returns (address) {
+        return owner;
+    }
+
+    function getInitialSupply() public view returns (uint256) {
+        return initialSupply;
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return currentSupply;
+    }
+
+    function getNumberOfDecimals() public view returns (uint8) {
+        return numberOfDecimals;
+    }
+
+    function getAddressOfImplementation() public view returns (address) {
+        return implementationAddress;
+    }
+
+    function balanceOf(address _user) public view returns (uint256) {
+        return balances[_user];
     }
 
     function isTheAddressAPerpetual(address _address)
@@ -55,57 +120,6 @@ contract BoltTokenProxy is Context {
         return isPerpetualAddress[_address];
     }
 
-    function subtractFunds(address _from, uint256 _value)
-        public
-        onlyImplementation
-    {
-        balances[_from] = balances[_from].sub(_value);
-    }
-
-    function addFunds(address _to, uint256 _value) public onlyImplementation {
-        balances[_to] = balances[_to].add(_value);
-    }
-
-    function getAddressOfImplementation() public view returns (address) {
-        return implementationAddress;
-    }
-
-    function setAddressOfImplementation(address _implementationAddress) public onlyOwner {
-        implementationAddress = _implementationAddress;
-    }
-
-    function totalSupply() external view returns (uint256) {
-        return currentSupply;
-    }
-
-    function getInitialSupply() external view returns (uint256) {
-        return initialSupply;
-    }
-
-    function getOwner() external view returns (address) {
-        return owner;
-    }
-
-    function name() external view returns (string memory) {
-        return nameOfToken;
-    }
-
-    function symbol() external view returns (string memory) {
-        return symbolOfToken;
-    }
-
-    function decimals() external view returns (uint8) {
-        return numberOfDecimals;
-    }
-
-    function balanceOf(address _user) external view returns (uint256) {
-        return balances[_user];
-    }
-
-    function getNumberOfDecimals() external view returns (uint8) {
-        return numberOfDecimals;
-    }
-
     function allowance(address _owner, address _spender)
         public
         view
@@ -114,6 +128,21 @@ contract BoltTokenProxy is Context {
         return allowances[_owner][_spender];
     }
 
+    // ## PUBLIC FUNCTIONS (ONLY IMPLEMENTATION) ##
+    //ADD FUNDS
+    function addFunds(address _to, uint256 _value) public onlyImplementation {
+        balances[_to] = balances[_to].add(_value);
+    }
+
+    //SUBTRACT FUNDS
+    function subtractFunds(address _from, uint256 _value)
+        public
+        onlyImplementation
+    {
+        balances[_from] = balances[_from].sub(_value);
+    }
+
+    //_APPROVE
     function _approve(
         address _owner,
         address _spender,
@@ -129,28 +158,43 @@ contract BoltTokenProxy is Context {
         emit Approval(_owner, _spender, _amount);
     }
 
+    // ## PUBLIC FUNCTIONS (ONLY OWNER) ##
+    //ADD PERPETUAL ADDRESS
+    function addPerpetualAddress(address _newAddress) public onlyOwner {
+        _addPerpetualAddress(_newAddress);
+    }
+
+    //BURN
+    function burn(address _account, uint256 _amount) public onlyOwner {
+        _burn(_account, _amount);
+    }
+
+    //MINT (ONE TIME A DAY)
     function mint(uint256 _amount) public onlyOwner oneTimeADay {
         lastTimestamp = block.timestamp;
         _mint(_amount);
     }
 
-    function _mint(uint256 _amount) internal {
-        require(_msgSender() != address(0), "ERC20: mint to the zero address");
-        totalMintedToday = _amount;
-        currentSupply = currentSupply.add(_amount);
-        balances[_msgSender()] = balances[_msgSender()].add(_amount);
-        emit Mint(_msgSender(), _amount);
+    // # SET #
+    function setAddressOfImplementation(address _implementationAddress)
+        public
+        onlyOwner
+    {
+        implementationAddress = _implementationAddress;
+
+        emit SetAddressOfImplementation(_implementationAddress);
     }
 
-    function burn(address _account, uint256 _amount) public onlyOwner {
-        _burn(_account, _amount);
+    // ## PRIVATE ##
+    //_ADD PERPETUAL ADDRESS
+    function _addPerpetualAddress(address _newAddress) private {
+        isPerpetualAddress[_newAddress] = true;
+
+        emit AddPerpetualAddress(_newAddress);
     }
 
-    function getTotalMintedToday() public view returns (uint256) {
-        return totalMintedToday;
-    }
-
-    function _burn(address _account, uint256 _amount) internal {
+    //_BURN
+    function _burn(address _account, uint256 _amount) private {
         require(_account != address(0), "ERC20: burn to the zero address");
         uint256 accountBalance = balances[_account];
         require(accountBalance >= _amount, "ERC20: burn amunt exceeds balance");
@@ -161,28 +205,12 @@ contract BoltTokenProxy is Context {
         emit Burn(_account, _amount);
     }
 
-    event Mint(address indexed _account, uint256 _amount);
-    event Burn(address indexed _account, uint256 _amount);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only the owner of the contract can do this");
-        _;
-    }
-
-    modifier onlyImplementation() {
-        require(msg.sender == implementationAddress);
-        _;
-    }
-
-    modifier oneTimeADay() {
-        require(
-            block.timestamp.sub(lastTimestamp) < 1 days,
-            "this function can be called just once per day"
-        );
-        _;
+    //_MINT
+    function _mint(uint256 _amount) private {
+        require(_msgSender() != address(0), "ERC20: mint to the zero address");
+        totalMintedToday = _amount;
+        currentSupply = currentSupply.add(_amount);
+        balances[_msgSender()] = balances[_msgSender()].add(_amount);
+        emit Mint(_msgSender(), _amount);
     }
 }
