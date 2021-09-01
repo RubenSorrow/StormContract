@@ -7,28 +7,38 @@ pragma solidity ^0.8.7;
 //Controllo del withdraw 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./BoltTokenProxy.sol";
 
 contract PerpetualProxy is Ownable {
     using SafeMath for uint256;
 
-    uint256 private reserve;
     uint256 private antiDumpingPercentage;
     uint256 private percentageOfInterest;
     address private beneficiary;
     address private addressOfLogicImplementation;
+    address private addressOfBoltTokenProxy;
+
+    BoltTokenProxy boltTokenProxy;
 
     constructor(
-        uint256 _initialReserve,
         uint256 _percentageOfInterest,
         uint256 _antiDumpingPercentage,
-        address _beneficiary
-        // address _addressOfLogicImplementation
+        address _beneficiary,
+        address _addressOfBoltTokenProxy
     ) {
         antiDumpingPercentage = _antiDumpingPercentage;
-        reserve = _initialReserve;
         percentageOfInterest = _percentageOfInterest;
         beneficiary = _beneficiary;
-        // addressOfLogicImplementation = _addressOfLogicImplementation;
+        addressOfBoltTokenProxy = _addressOfBoltTokenProxy;
+        boltTokenProxy = BoltTokenProxy(addressOfBoltTokenProxy);
+    }
+
+    function getaddressOfBoltTokenProxy() public view returns(address) {
+        return addressOfBoltTokenProxy;
+    }
+
+    function setaddressOfBoltTokenProxy(address _newAddress) public onlyOwner {
+        addressOfBoltTokenProxy = _newAddress;
     }
 
     function getAddressOfLogicImplementation() public view returns(address) {
@@ -56,7 +66,7 @@ contract PerpetualProxy is Ownable {
     }
 
     function getReserve() public view returns (uint256) {
-        return reserve;
+        return boltTokenProxy.balanceOf(address(this));
     }
 
     function getPercentageOfInterest() public view returns (uint256) {
@@ -65,14 +75,6 @@ contract PerpetualProxy is Ownable {
 
     function setPercentageOfinterest(uint256 _percentageOfInterest) public onlyLogicContract {
         percentageOfInterest = _percentageOfInterest;
-    }
-
-    function addReserve(uint256 _amount) public view onlyLogicContract {
-        reserve.add(_amount);   
-    }
-
-    function subReserve(uint256 _amount) public view onlyLogicContract {
-        reserve.sub(_amount);
     }
 
     modifier onlyBeneficiary(address _beneficiary) {

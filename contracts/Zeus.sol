@@ -3,16 +3,28 @@ pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import "./BoltTokenProxy.sol";
+import "./PerpetualProxy.sol";
 
 contract Zeus is Context {
     using SafeMath for uint256;
 
+    address private perpetualProxyAddress;
     string version = "1";
     BoltTokenProxy private myProxy;
+    PerpetualProxy private perpetualProxy;
+
 
     constructor(address _addressOfTokenProxy) {
         myProxy = BoltTokenProxy(_addressOfTokenProxy);
+    }
+
+    function setPerpetualProxyAddress(address _newAddress) public onlyOwnerOfProxy {
+        perpetualProxyAddress = _newAddress;
+        perpetualProxy = PerpetualProxy(perpetualProxyAddress);
+    }
+
+    function getPerpetualProxyAddress() public view returns(address) {
+        return perpetualProxyAddress;
     }
 
     function getVersion() external view returns (string memory) {
@@ -180,6 +192,14 @@ contract Zeus is Context {
         uint256 value,
         uint256 fee
     );
+
+    modifier onlyOwnerOrPerpetuals() {
+        require(
+            _msgSender() == myProxy.getOwner() || myProxy.isTheAddressAPerpetual(_msgSender()),
+            "The sender must be either the owner of the proxy or a perpetual contract"
+        );
+        _;
+    }
 
     modifier onlyOwnerOfProxy() {
         require(

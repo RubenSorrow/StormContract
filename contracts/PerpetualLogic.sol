@@ -20,7 +20,7 @@ contract PerpetualLogic is Ownable {
     bool private didSendTokenToday = false;
     address private addressOfProxyImplementationOfZeus;
     address private logicImplementationOfZeus;
-    address private addressProxyImplementationOfPerpetual;
+    address private addressOfProxyPerpetual;
 
     BoltTokenProxy private boltTokenProxy;
     Zeus private zeusContract;
@@ -31,29 +31,45 @@ contract PerpetualLogic is Ownable {
         address _logicImplementationOfZeus,
         address _addressOfperpetualProxy
     ) {
-        addressProxyImplementationOfPerpetual = _addressOfperpetualProxy;
+        addressOfProxyPerpetual = _addressOfperpetualProxy;
         addressOfProxyImplementationOfZeus = _addressOfProxyImplementationOfZeus;
         logicImplementationOfZeus = _logicImplementationOfZeus;
         boltTokenProxy = BoltTokenProxy(_addressOfProxyImplementationOfZeus);
         zeusContract = Zeus(_logicImplementationOfZeus);
-        perpetualProxy = PerpetualProxy(addressProxyImplementationOfPerpetual);
+        perpetualProxy = PerpetualProxy(addressOfProxyPerpetual);
     }
 
-
-    function getlogicImplementationOfZeus() public view returns(address){
+    function getlogicImplementationOfZeus() public view returns (address) {
         return logicImplementationOfZeus;
     }
 
-    function setlogicImplementationOfZeus(address _logicImplementationOfZeus) public onlyOwner {
+    function setlogicImplementationOfZeus(address _logicImplementationOfZeus)
+        public
+        onlyOwner
+    {
         logicImplementationOfZeus = _logicImplementationOfZeus;
     }
 
-    function addFunds(uint256 _amount) public onlyOwner {
-        _addFunds(_amount);
+    function addFunds() public onlyOwner {
+        _addFunds();
     }
 
-    function _addFunds(uint256 _amount) private {
-        zeusContract.transfer(_msgSender(), address(addressProxyImplementationOfPerpetual), _amount);
+    function _addFunds() private {
+        //Check se il balance di questo contratto e' minore dello 0.0025% della supply totale
+        uint256 totalSupply = boltTokenProxy.totalSupply();
+        uint256 expectedBalanceOfPerpetual = totalSupply
+            .mul(perpetualProxy.getPercentageOfInterest())
+            .div(10**8);
+        if (
+            expectedBalanceOfPerpetual >
+            boltTokenProxy.balanceOf(addressOfProxyPerpetual)
+        ) {
+            zeusContract.transfer(
+                _msgSender(),
+                address(addressOfProxyPerpetual),
+                expectedBalanceOfPerpetual.sub(boltTokenProxy.balanceOf(addressOfProxyPerpetual))
+            );
+        }
     }
 
     /*
@@ -68,7 +84,7 @@ contract PerpetualLogic is Ownable {
         Only the beneficiary of the contract itself can give out the benificiary role.
         Storm team has no direct manage of the funds locked inside the contract
     */
-    function withdraw(uint256 _amount) public onlyBeneficiary(_msgSender()) {
+    function withdraw(uint256 _amount) public onlyOwner {
         _withdraw(_amount);
     }
 
@@ -78,8 +94,10 @@ contract PerpetualLogic is Ownable {
             _msgSender() != address(0),
             "ERC20: receiver of the contract can't be address(0)"
         );
- 
-        if ((amountOfTokensSentDaily + _amount) > getPercentageOfTotalSupply()) {
+
+        if (
+            (amountOfTokensSentDaily + _amount) > getPercentageOfTotalSupply()
+        ) {
             revert("Limit of daily transfer reached");
         }
 
@@ -89,14 +107,17 @@ contract PerpetualLogic is Ownable {
         }
 
         //Calculate the new percentage of interest
-        uint256 percentageOfInterest = perpetualProxy.getPercentageOfInterest();
-        uint256 newPercentageOfInterest = percentageOfInterest.mul(_amount).div(perpetualProxy.getReserve());
-        perpetualProxy.setPercentageOfinterest(newPercentageOfInterest);
-        
-        //Take the amount of tokens from the sender and give it to the receiver
-        perpetualProxy.subReserve(_amount);
-        amountOfTokensSentDaily.add(_amount);
-        zeusContract.transfer(address(this), _msgSender(), _amount);
+        if (_amount > 0) {
+            uint256 percentageOfInterest = perpetualProxy
+                .getPercentageOfInterest();
+            uint256 newPercentageOfInterest = percentageOfInterest
+                .mul(_amount)
+                .div(perpetualProxy.getReserve());
+            perpetualProxy.setPercentageOfinterest(newPercentageOfInterest);
+            //Take the amount of tokens from the sender and give it to the receiver
+            amountOfTokensSentDaily.add(_amount);
+            zeusContract.transfer(address(this), _msgSender(), _amount);
+        }
     }
 
     function start24HTimer() private {
@@ -109,13 +130,17 @@ contract PerpetualLogic is Ownable {
     }
 
     //Calculate the 5% of the totalSupply of bolts
-    function getPercentageOfTotalSupply() private view returns(uint256) {
+    function getPercentageOfTotalSupply() private view returns (uint256) {
         uint256 totalSupply = boltTokenProxy.totalSupply();
-        return totalSupply.div(100).mul(perpetualProxy.getAntiDumpingPercentage());
+        return
+            totalSupply.div(100).mul(perpetualProxy.getAntiDumpingPercentage());
     }
 
     modifier onlyBeneficiary(address _beneficiary) {
-        require(perpetualProxy.getBeneficiary() == _beneficiary);
+        require(
+            perpetualProxy.getBeneficiary() == _beneficiary,
+            "Only the beneficiary can call this function"
+        );
         _;
     }
 }
