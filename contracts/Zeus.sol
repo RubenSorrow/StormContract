@@ -88,14 +88,14 @@ contract Zeus is Context {
         emit Transfer(_sender, _recipient, _amount);
     }
 
-    function multipleTransfer(
+    /*function multipleTransfer(
         address[] memory _array,
         uint256 _amount,
         uint256 _n
     ) public returns (bool) {
         _multipleTransfer(_array, _amount, _n);
         return true;
-    }
+    }*/
 
     function _multipleTransfer(
         address[] memory _array,

@@ -76,15 +76,11 @@ contract BoltTokenProxy is Context {
         balances[_to] = balances[_to].add(_value);
     }
 
-    function getAddressOfImplementation() external view returns (address) {
+    function getAddressOfImplementation() public view returns (address) {
         return implementationAddress;
     }
 
-    function setAddressOfImplementation(address _implementationAddress) public {
-        require(
-            _msgSender() == owner,
-            "Only the owner of the contract can set the address of the implementation"
-        );
+    function setAddressOfImplementation(address _implementationAddress) public onlyOwner {
         implementationAddress = _implementationAddress;
     }
 
@@ -183,7 +179,7 @@ contract BoltTokenProxy is Context {
         uint256 value
     );
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        require(msg.sender == owner, "Only the owner of the contract can do this");
         _;
     }
 
