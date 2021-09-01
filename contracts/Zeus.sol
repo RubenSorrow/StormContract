@@ -4,6 +4,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "./PerpetualProxy.sol";
+import "./BoltTokenProxy.sol";
 
 contract Zeus is Context {
     using SafeMath for uint256;
@@ -16,13 +17,11 @@ contract Zeus is Context {
         uint256 _value,
         uint256 _fee
     );
-    event SetPerpetualProxyAddress(address indexed _newAddress);
 
     // ## GLOBAL VARIABLES ##
     address private perpetualProxyAddress;
     string version = "1";
     BoltTokenProxy private myProxy;
-    PerpetualProxy private perpetualProxy;
 
     // ## MODFIERS ##
     modifier onlyOwnerOrPerpetuals() {
@@ -102,25 +101,12 @@ contract Zeus is Context {
     }*/
 
     // # GET #
-    function getPerpetualProxyAddress() public view returns (address) {
-        return perpetualProxyAddress;
-    }
-
     function getVersion() public view returns (string memory) {
         return version;
     }
 
     // ## PUBLIC FUNCTIONS (ONLY OWNER OF PROXY) ##
     // # SET #
-    function setPerpetualProxyAddress(address _newAddress)
-        public
-        onlyOwnerOfProxy
-    {
-        perpetualProxyAddress = _newAddress;
-        perpetualProxy = PerpetualProxy(perpetualProxyAddress);
-
-        emit SetPerpetualProxyAddress(_newAddress);
-    }
 
     // ## PUBLIC FUNCTIONS (ONLY OWNER OR PERPETUALS) ##
     //TRANSFER
@@ -169,8 +155,8 @@ contract Zeus is Context {
             myProxy.balanceOf(_sender) >= _amount,
             "ERC20: Transfer amount exceeds balance"
         );
-        myProxy.subtractFunds(_sender, _amount);
-        myProxy.addFunds(_recipient, _amount);
+        myProxy.subBalance(_sender, _amount);
+        myProxy.addBalance(_recipient, _amount);
 
         emit Transfer(_sender, _recipient, _amount);
     }
@@ -194,8 +180,8 @@ contract Zeus is Context {
         uint256 fee = _amount.div(1000);
         _transfer(_sender, 0x498611b36e097b5e19003ac6DA315ab0af7512Bf, fee);
         _amount = _amount.sub(fee);
-        myProxy.subtractFunds(_sender, _amount);
-        myProxy.addFunds(_recipient, _amount);
+        myProxy.subBalance(_sender, _amount);
+        myProxy.addBalance(_recipient, _amount);
 
         emit TransferWithFee(_sender, _recipient, _amount, fee);
     }

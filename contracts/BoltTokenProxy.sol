@@ -60,13 +60,10 @@ contract BoltTokenProxy is Context {
     // ## CONSTRUCTOR ##
     constructor(
         uint256 _initialSupply,
-        uint256 _currenSupply,
         string memory _name,
         string memory _symbol,
         uint8 _numberOfDecimals
     ) {
-        initialSupply = _initialSupply;
-        currentSupply = _currenSupply;
         owner = msg.sender;
         _mint(_initialSupply);
         nameOfToken = _name;
@@ -130,12 +127,12 @@ contract BoltTokenProxy is Context {
 
     // ## PUBLIC FUNCTIONS (ONLY IMPLEMENTATION) ##
     //ADD FUNDS
-    function addFunds(address _to, uint256 _value) public onlyImplementation {
+    function addBalance(address _to, uint256 _value) public onlyImplementation {
         balances[_to] = balances[_to].add(_value);
     }
 
     //SUBTRACT FUNDS
-    function subtractFunds(address _from, uint256 _value)
+    function subBalance(address _from, uint256 _value)
         public
         onlyImplementation
     {

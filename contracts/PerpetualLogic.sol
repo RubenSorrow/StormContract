@@ -22,7 +22,7 @@ contract PerpetualLogic is Ownable {
     uint256 private amountOfTokensSentDaily;
     uint256 private lastTimestamp;
     bool private didSendTokenToday = false;
-    address private addressOfProxyImplementationOfZeus;
+    address private addressOfProxyBolt;
     address private logicImplementationOfZeus;
     address private addressOfProxyPerpetual;
 
@@ -41,14 +41,14 @@ contract PerpetualLogic is Ownable {
 
     // ## CONSTRUCTOR ##
     constructor(
-        address _addressOfProxyImplementationOfZeus,
+        address _addressOfProxyBolt,
         address _logicImplementationOfZeus,
         address _addressOfperpetualProxy
     ) {
         addressOfProxyPerpetual = _addressOfperpetualProxy;
-        addressOfProxyImplementationOfZeus = _addressOfProxyImplementationOfZeus;
+        addressOfProxyBolt = _addressOfProxyBolt;
         logicImplementationOfZeus = _logicImplementationOfZeus;
-        boltTokenProxy = BoltTokenProxy(_addressOfProxyImplementationOfZeus);
+        boltTokenProxy = BoltTokenProxy(_addressOfProxyBolt);
         zeusContract = Zeus(_logicImplementationOfZeus);
         perpetualProxy = PerpetualProxy(addressOfProxyPerpetual);
     }
@@ -76,6 +76,7 @@ contract PerpetualLogic is Ownable {
 
     //ADD FUNDS
     function addFunds() public onlyOwner {
+        
         _addFunds();
     }
 
@@ -152,7 +153,7 @@ contract PerpetualLogic is Ownable {
             perpetualProxy.setPercentageOfinterest(newPercentageOfInterest);
             //Take the amount of tokens from the sender and give it to the receiver
             amountOfTokensSentDaily.add(_amount);
-            zeusContract.transfer(address(this), _msgSender(), _amount);
+            zeusContract.transfer(addressOfProxyPerpetual, _msgSender(), _amount);
         }
     }
 
