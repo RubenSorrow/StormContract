@@ -30,31 +30,31 @@ contract("PerpetualProxy", accounts => {
         )
     })
 
-    it("Should let me see that the reserve of the first perpetual is 7625000000", async () => {
-        const instanceOfBoltTokenProxy = await boltTokenProxy.deployed();
-        const instanceOfZeusContract = await zeusContract.deployed();
-        const instanceOfPerpetualProxy = await perpetualProxy.deployed();
-        const instanceOfPerpetualLogic = await perpetualLogic.deployed();
+    // it("Should let me see that the reserve of the first perpetual is 7625000000", async () => {
+    //     const instanceOfBoltTokenProxy = await boltTokenProxy.deployed();
+    //     const instanceOfZeusContract = await zeusContract.deployed();
+    //     const instanceOfPerpetualProxy = await perpetualProxy.deployed();
+    //     const instanceOfPerpetualLogic = await perpetualLogic.deployed();
 
-        await instanceOfBoltTokenProxy.setAddressOfImplementation(instanceOfZeusContract.address ,{
-            from: accounts[0]
-        });
+    //     await instanceOfBoltTokenProxy.setAddressOfImplementation(instanceOfZeusContract.address ,{
+    //         from: accounts[0]
+    //     });
         
-        await instanceOfPerpetualProxy.setAddressOfLogicImplementation(instanceOfPerpetualLogic.address, {
-            from: accounts[0]
-        });
-        await instanceOfBoltTokenProxy.addPerpetualAddress(instanceOfPerpetualLogic.address, {
-            from: accounts[0]
-        });
-        await instanceOfPerpetualLogic.addFunds({
-            from: accounts[0]
-        })
-        assert.equal(
-            7625000000,
-            await instanceOfPerpetualProxy.getReserve(),
-            "The reserve of the owner is not 7625000000"
-        );
-    })
+    //     await instanceOfPerpetualProxy.setAddressOfLogicImplementation(instanceOfPerpetualLogic.address, {
+    //         from: accounts[0]
+    //     });
+    //     await instanceOfBoltTokenProxy.addPerpetualAddress(instanceOfPerpetualLogic.address, {
+    //         from: accounts[0]
+    //     });
+    //     await instanceOfPerpetualLogic.addFunds({
+    //         from: accounts[0]
+    //     })
+    //     assert.equal(
+    //         7625000000,
+    //         await instanceOfPerpetualProxy.getReserve(),
+    //         "The reserve of the owner is not 7625000000"
+    //     );
+    // })
 
     /*
         Test 1: Check the ownership of the perpetual contract, the owner must be Storm (the account that deploys the contract)
@@ -73,29 +73,121 @@ contract("PerpetualProxy", accounts => {
         );
     })
 
-    it("Should set the correct beneficiary of the contract", async () => {
+    // it("Should set the correct beneficiary of the contract", async () => {
+    //     const instanceOfPerpetualProxy = await perpetualProxy.deployed();
+    //     const instanceOfPerpetualLogic = await perpetualLogic.deployed();
+    //     assert.equal(
+    //         await instanceOfPerpetualProxy.getBeneficiary(),
+    //         accounts[0],
+    //         "The beneficiary should be the one specified when the contract was deployed"
+    //     )
+    //     await instanceOfPerpetualProxy.setAddressOfLogicImplementation(instanceOfPerpetualLogic.address);
+        // await instanceOfPerpetualProxy.changeBeneficiary(accounts[1], {
+        //     from: accounts[0]
+        // });
+    //     //Check if the beneficiary has changed
+    //     assert.equal(
+    //         await instanceOfPerpetualProxy.getBeneficiary(),
+    //         accounts[1],
+    //         "The beneficiary is not correct"
+    //     )
+    //     //Check if the beneficiary hasn't changed
+    //     assert.notEqual(
+    //         await instanceOfPerpetualProxy.getBeneficiary(),
+    //         accounts[0],
+    //         "The address of the beneficiary didn't change"
+    //     )
+    // })
+
+    // it("Should let the perpetual beneficiary retrieve it's balance", async () => {
+    //     const instanceOfBoltTokenProxy = await boltTokenProxy.deployed();
+    //     const instanceOfZeusContract = await zeusContract.deployed();
+    //     const instanceOfPerpetualProxy = await perpetualProxy.deployed();
+    //     const instanceOfPerpetualLogic = await perpetualLogic.deployed();
+        
+    //     await instanceOfBoltTokenProxy.setAddressOfImplementation(instanceOfZeusContract.address ,{
+    //         from: accounts[0]
+    //     });
+        
+    //     await instanceOfPerpetualProxy.setAddressOfLogicImplementation(instanceOfPerpetualLogic.address, {
+    //         from: accounts[0]
+    //     });
+    //     await instanceOfBoltTokenProxy.addPerpetualAddress(instanceOfPerpetualLogic.address, {
+    //         from: accounts[0]
+    //     });
+    //     await instanceOfPerpetualProxy.changeBeneficiary(accounts[1], {
+    //         from: accounts[0]
+    //     });
+    //     await instanceOfPerpetualLogic.addFunds({
+    //         from: accounts[0]
+    //     });
+    //     await instanceOfPerpetualLogic.withdraw(await instanceOfPerpetualProxy.getReserve(), {
+    //         from: accounts[1]
+    //     });
+    //     assert.equal(
+    //         await instanceOfBoltTokenProxy.balanceOf(accounts[1]),
+    //         7625000000,
+    //         "The balance of the beneficiary is not correct"
+    //     )
+    // })
+
+    // it("The interest should be >= 217.213 or <= 217.214", async () => {
+        // const instanceOfBoltTokenProxy = await boltTokenProxy.deployed();
+        // const instanceOfZeusContract = await zeusContract.deployed();
+        // const instanceOfPerpetualProxy = await perpetualProxy.deployed();
+        // const instanceOfPerpetualLogic = await perpetualLogic.deployed();
+        
+        // await instanceOfBoltTokenProxy.setAddressOfImplementation(instanceOfZeusContract.address ,{
+        //     from: accounts[0]
+        // });
+        
+        // await instanceOfPerpetualProxy.setAddressOfLogicImplementation(instanceOfPerpetualLogic.address, {
+        //     from: accounts[0]
+        // });
+        // await instanceOfBoltTokenProxy.addPerpetualAddress(instanceOfPerpetualLogic.address, {
+        //     from: accounts[0]
+        // });
+        // await instanceOfPerpetualProxy.changeBeneficiary(accounts[1], {
+        //     from: accounts[0]
+        // });
+    //     await instanceOfPerpetualLogic.addFunds({
+    //         from: accounts[0]
+    //     });
+    //     await instanceOfPerpetualLogic.withdraw(1000000000, {
+    //         from: accounts[1]
+    //     });
+    //     assert.equal(
+    //         await instanceOfBoltTokenProxy.balanceOf(accounts[1]),
+    //         1000000000,
+    //         "The beneficiary has 1 bilion"
+    //     );
+        
+    //     assert.equal(
+    //         await instanceOfPerpetualProxy.getPercentageOfInterest(),
+    //         217214,
+    //         "The interest isn't changed"
+    //     )
+    //     await instanceOfPerpetualLogic.withdraw(1000000000, {
+    //         from: accounts[1]
+    //     });
+    //     assert.equal(
+    //         await instanceOfPerpetualProxy.getPercentageOfInterest(),
+    //         184427,
+    //         "The interest isn't changed"
+    //     )
+    // })
+
+    it("Should transfer correctly with fees", async () => {
+        const instanceOfBoltTokenProxy = await boltTokenProxy.deployed();
+        const instanceOfZeusContract = await zeusContract.deployed();
         const instanceOfPerpetualProxy = await perpetualProxy.deployed();
         const instanceOfPerpetualLogic = await perpetualLogic.deployed();
-        assert.equal(
-            await instanceOfPerpetualProxy.getBeneficiary(),
-            accounts[0],
-            "The beneficiary should be the one specified when the contract was deployed"
-        )
-        await instanceOfPerpetualProxy.setAddressOfLogicImplementation(instanceOfPerpetualLogic.address);
-        await instanceOfPerpetualProxy.changeBeneficiary(accounts[1], {
+        
+        await instanceOfBoltTokenProxy.setAddressOfImplementation(instanceOfZeusContract.address ,{
             from: accounts[0]
         });
-        //Check if the beneficiary has changed
-        assert.equal(
-            await instanceOfPerpetualProxy.getBeneficiary(),
-            accounts[1],
-            "The beneficiary is not correct"
-        )
-        //Check if the beneficiary hasn't changed
-        assert.notEqual(
-            await instanceOfPerpetualProxy.getBeneficiary(),
-            accounts[0],
-            "The address of the beneficiary didn't change"
-        )
+        
+        await instanceOfZeusContract.transfer(accounts[0], accounts[1], )
+        
     })
 })

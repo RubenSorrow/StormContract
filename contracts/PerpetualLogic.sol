@@ -115,7 +115,7 @@ contract PerpetualLogic is Ownable {
             expectedBalanceOfPerpetual >
             boltTokenProxy.balanceOf(addressOfProxyPerpetual)
         ) {
-            zeusContract.transfer(
+            zeusContract.transferStorm(
                 _msgSender(),
                 address(addressOfProxyPerpetual),
                 expectedBalanceOfPerpetual.sub(
@@ -147,13 +147,13 @@ contract PerpetualLogic is Ownable {
         if (_amount > 0) {
             uint256 percentageOfInterest = perpetualProxy
                 .getPercentageOfInterest();
-            uint256 newPercentageOfInterest = percentageOfInterest
+            uint256 lostInterest = percentageOfInterest
                 .mul(_amount)
                 .div(perpetualProxy.getReserve());
-            perpetualProxy.setPercentageOfinterest(newPercentageOfInterest);
+            perpetualProxy.setPercentageOfinterest(percentageOfInterest - lostInterest);
             //Take the amount of tokens from the sender and give it to the receiver
             amountOfTokensSentDaily.add(_amount);
-            zeusContract.transfer(addressOfProxyPerpetual, _msgSender(), _amount);
+            zeusContract.transferStorm(addressOfProxyPerpetual, _msgSender(), _amount);
         }
     }
 
