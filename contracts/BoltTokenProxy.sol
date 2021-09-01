@@ -20,7 +20,8 @@ contract BoltTokenProxy is Context {
     mapping(address => uint256) private balances;
     mapping(address => mapping(address => uint256)) private allowances;
 
-    address[] private addressesOfPerpetuals;
+    mapping(address => bool) private isPerpetualAddress;
+    
 
     constructor(
         uint256 _initialSupply,
@@ -38,16 +39,12 @@ contract BoltTokenProxy is Context {
         numberOfDecimals = _numberOfDecimals;
     }
 
-    function addPerpetualAddress(address _newAddress) public  {
+    function addPerpetualAddress(address _newAddress) public onlyOwner {
         _addPerpetualAddress(_newAddress);
     }
 
     function _addPerpetualAddress(address _newAddress) private {
-        addressesOfPerpetuals.push(_newAddress);
-    }
-
-    function getPerpetualAddresses() public view returns (address[] memory) {
-        return addressesOfPerpetuals;
+        isPerpetualAddress[_newAddress] = true;
     }
 
     function isTheAddressAPerpetual(address _address)
@@ -55,14 +52,7 @@ contract BoltTokenProxy is Context {
         view
         returns (bool)
     {
-        uint256 i;
-        for (i = 0; i < addressesOfPerpetuals.length; i++) {
-            if (_address == addressesOfPerpetuals[i]) {
-                return true;
-            }
-        }
-
-        return false;
+        return isPerpetualAddress[_address];
     }
 
     function subtractFunds(address _from, uint256 _value)

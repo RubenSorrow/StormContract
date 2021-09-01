@@ -35,7 +35,7 @@ contract Zeus is Context {
         address _sender,
         address _recipient,
         uint256 _amount
-    ) public onlyOwnerOfProxy returns (bool success) {
+    ) public onlyOwnerOrPerpetuals returns (bool success) {
         _transfer(_sender, _recipient, _amount);
         return true;
     }

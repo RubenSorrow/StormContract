@@ -56,8 +56,7 @@ contract PerpetualLogic is Ownable {
 
     function _addFunds() private {
         //Check se il balance di questo contratto e' minore dello 0.0025% della supply totale
-        uint256 totalSupply = boltTokenProxy.totalSupply();
-        uint256 expectedBalanceOfPerpetual = totalSupply
+        uint256 expectedBalanceOfPerpetual = boltTokenProxy.totalSupply()
             .mul(perpetualProxy.getPercentageOfInterest())
             .div(10**8);
         if (
