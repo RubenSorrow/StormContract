@@ -25,11 +25,11 @@ contract PerpetualProxy is Ownable {
     address private addressOfLogicImplementation;
     address private addressOfBoltTokenProxy;
 
-    BoltTokenProxy boltTokenProxy;
+    BoltTokenProxy private boltTokenProxy;
 
     // ## MODIFIERS ##
-    modifier onlyBeneficiary(address _beneficiary) {
-        require(beneficiary == _beneficiary);
+    modifier onlyBeneficiary() {
+        require(_msgSender() == beneficiary);
         _;
     }
 
@@ -80,43 +80,51 @@ contract PerpetualProxy is Ownable {
 
     // ## PUBLIC FUNCTIONS (ONLY LOGIC CONTRACT)
     // # SET #
-    function setPercentageOfinterest(uint256 _percentageOfInterest)
+    function setPercentageOfInterest(uint256 _percentageOfInterest)
         public
-        onlyLogicContract
+        onlyLogicContract()
+        returns(bool)
     {
-        percentageOfInterest = _percentageOfInterest;
-
         emit SetPercentageOfInterest(_percentageOfInterest);
+        
+        percentageOfInterest = _percentageOfInterest;
+        return true;
     }
 
     // ## PUBLIC FUNCTIONS (ONLY OWNER)
     // # SET #
     function setAddressOfLogicImplementation(address _newAddress)
         public
-        onlyOwner
+        onlyOwner()
+        returns(bool)
     {
-        addressOfLogicImplementation = _newAddress;
-
         emit SetAddressOfLogicImplementation(_newAddress);
+        
+        addressOfLogicImplementation = _newAddress;
+        return true;
     }
 
     function setAntiDumpingPercentage(uint256 _antiDumpingPercentage)
         public
-        onlyOwner
+        onlyOwner()
+        returns(bool)
     {
-        antiDumpingPercentage = _antiDumpingPercentage;
-
         emit SetAntiDumpingPercentage(_antiDumpingPercentage);
+        
+        antiDumpingPercentage = _antiDumpingPercentage;
+        return true;
     }
 
     // ## PUBLIC FUNCTIONS (ONLY BENEFICIARY)
     // # SET #
     function changeBeneficiary(address _newBeneficiary)
         public
-        onlyBeneficiary(_msgSender())
+        onlyBeneficiary()
+        returns(bool)
     {
-        beneficiary = _newBeneficiary;
-
         emit ChangeBeneficiary(_newBeneficiary);
+        
+        beneficiary = _newBeneficiary;
+        return true;
     }
 }

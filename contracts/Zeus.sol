@@ -2,57 +2,47 @@
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
+import "./Pausable.sol";
 import "./PerpetualProxy.sol";
 import "./BoltTokenProxy.sol";
 
-contract Zeus is Context {
+contract Zeus is Pausable {
     using SafeMath for uint256;
 
     // ## EVENTS ##
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event TransferWithFee(
-        address indexed _from,
-        address indexed _to,
-        uint256 _value,
-        uint256 _fee
-    );
+    event Transfer(address indexed _from, address indexed _to, uint256 _value, uint256 fee);
+    event TransferStorm(address indexed _from, address indexed _to, uint256 _value);
+    event FeeChanged(address indexed by, uint256 oldFee, uint256 newFee);
 
     // ## GLOBAL VARIABLES ##
-    address private perpetualProxyAddress;
     string version = "1";
     BoltTokenProxy private myProxy;
+    uint256 private fee;
 
     // ## MODFIERS ##
     modifier onlyOwnerOrPerpetuals() {
         require(
-            _msgSender() == myProxy.getOwner() ||
+            _msgSender() == myProxy.owner() ||
                 myProxy.isTheAddressAPerpetual(_msgSender()),
             "The sender must be either the owner of the proxy or a perpetual contract"
         );
         _;
     }
 
-    modifier onlyOwnerOfProxy() {
-        require(
-            _msgSender() == myProxy.getOwner(),
-            "The sender must be the owner of the proxy"
-        );
-        _;
-    }
-
     // ## CONSTRUCTOR ##
-    constructor(address _addressOfTokenProxy) {
+    constructor(address _addressOfTokenProxy, uint256 _fee) {
         myProxy = BoltTokenProxy(_addressOfTokenProxy);
+        fee = _fee;
     }
 
     // ## PUBLIC FUNCTIONS ##
     //TRANSFER WITH FEE
-    function transferWithFee(address _recipient, uint256 _amount)
+    function transfer(address _recipient, uint256 _amount)
         public
+        whenNotPaused()
         returns (bool success)
     {
-        _transferWithFee(_msgSender(), _recipient, _amount);
+        _transferFee(_msgSender(), _recipient, _amount);
         return true;
     }
 
@@ -61,48 +51,40 @@ contract Zeus is Context {
         address _owner,
         address _spender,
         uint256 _amount
-    ) public {
-        myProxy._approve(_owner, _spender, _amount);
+    ) public whenNotPaused() {
+        myProxy.approve(_owner, _spender, _amount);
     }
 
     //INCREASE ALLOWANCE
     function increaseAllowance(
-        address _owner,
         address _spender,
         uint256 _amount
-    ) public returns (bool) {
-        require(
-            myProxy.balanceOf(_owner) > _amount,
-            "ERC20: sender does not have enough money"
-        );
-        _increaseAllowance(_owner, _spender, _amount);
+    ) public whenNotPaused() returns (bool) {
+        _increaseAllowance(_msgSender(),_spender, _amount);
         return true;
     }
 
     //DECREASE ALLOWANCE
     function decreaseAllowance(
-        address _owner,
         address _spender,
         uint256 _amount
-    ) public returns (bool) {
-        require(_amount >= 0, "ERC20: sender does not have enough money");
-        _decreaseAllowance(_owner, _spender, _amount);
+    ) public whenNotPaused() returns (bool) {
+        _decreaseAllowance(_msgSender(), _spender, _amount);
         return true;
     }
-
-    //MULTIPLE TRANSFER
-    /*function multipleTransfer(
-        address[] memory _array,
-        uint256 _amount,
-        uint256 _n
-    ) public returns (bool) {
-        _multipleTransfer(_array, _amount, _n);
-        return true;
-    }*/
-
+    
+    //CALCULATE FEE
+    function calculateFee(uint256 _amount) public view returns(uint256) {
+        return _amount.mul(fee).div(10**8);
+    }
+    
     // # GET #
     function getVersion() public view returns (string memory) {
         return version;
+    }
+    
+    function getFee() public view returns(uint256) {
+        return fee;
     }
 
     // ## PUBLIC FUNCTIONS (ONLY OWNER OF PROXY) ##
@@ -110,12 +92,13 @@ contract Zeus is Context {
 
     // ## PUBLIC FUNCTIONS (ONLY OWNER OR PERPETUALS) ##
     //TRANSFER
-    function transfer(
-        address _sender,
+    function transferStorm(
         address _recipient,
         uint256 _amount
-    ) public onlyOwnerOrPerpetuals returns (bool success) {
-        _transfer(_sender, _recipient, _amount);
+    ) public onlyOwner() whenNotPaused() returns (bool success) {
+        emit TransferStorm(_msgSender(), _recipient, _amount);
+        
+        _transfer(_msgSender(), _recipient, _amount);
         return true;
     }
 
@@ -124,8 +107,7 @@ contract Zeus is Context {
         address _sender,
         address _recipient,
         uint256 _amount
-    ) public onlyOwnerOfProxy returns (bool success) {
-        _transfer(_sender, _recipient, _amount);
+    ) public whenNotPaused() returns (bool) {
 
         uint256 currentAllowance = myProxy.allowance(_sender, _msgSender());
         require(
@@ -133,13 +115,27 @@ contract Zeus is Context {
             "ERC20: transfer amount exceeds allowance"
         );
         unchecked {
-            myProxy._approve(_sender, _msgSender(), _amount);
+            myProxy.approve(_sender, _msgSender(), _amount);
         }
+         _transfer(_sender, _recipient, _amount);
 
         return true;
     }
+    
+    //ALLOW TO SPEND ON BEHALF OF OWNER
+    function allowFromStorm(address _to,uint256 _amount) public onlyOwnerOrPerpetuals() {
+        _increaseAllowance(owner(), _to, _amount);
+    }
 
     // ## PRIVATE FUNCTIONS ##
+    //_SETFEE
+    function setFee(uint256 _fee) public onlyOwnerOrPerpetuals() whenNotPaused() returns(bool) {
+        emit FeeChanged(_msgSender(), fee, _fee);
+        
+        fee = _fee;
+        return true;
+    }
+    
     //_TRANSFER
     function _transfer(
         address _sender,
@@ -158,11 +154,10 @@ contract Zeus is Context {
         myProxy.subBalance(_sender, _amount);
         myProxy.addBalance(_recipient, _amount);
 
-        emit Transfer(_sender, _recipient, _amount);
     }
 
     //_TRANSFER WITH FEE
-    function _transferWithFee(
+    function _transferFee(
         address _sender,
         address _recipient,
         uint256 _amount
@@ -176,14 +171,17 @@ contract Zeus is Context {
             myProxy.balanceOf(_sender) >= _amount,
             "ERC20: Transfer amount exceeds balance"
         );
+        uint256 _fee = _amount.mul(fee).div(10**8);
+        if(_fee < 1) {
+            _fee = 1;
+        }
+        emit Transfer(_sender, _recipient, _amount, _fee);
 
-        uint256 fee = _amount.div(1000);
-        _transfer(_sender, 0x498611b36e097b5e19003ac6DA315ab0af7512Bf, fee);
-        _amount = _amount.sub(fee);
+        _transfer(_sender, owner(), _fee);
+        _amount = _amount.sub(_fee);
         myProxy.subBalance(_sender, _amount);
         myProxy.addBalance(_recipient, _amount);
 
-        emit TransferWithFee(_sender, _recipient, _amount, fee);
     }
 
     //_INCREASE ALLOWANCE
@@ -192,8 +190,7 @@ contract Zeus is Context {
         address _spender,
         uint256 _amount
     ) private {
-        uint256 currentAllowance = myProxy.allowance(_owner, _spender);
-        myProxy._approve(_owner, _spender, currentAllowance + _amount);
+        myProxy.approve(_owner, _spender, myProxy.allowance(_msgSender(), _spender) + _amount);
     }
 
     //_DECREASE ALLOWANCE
@@ -207,17 +204,7 @@ contract Zeus is Context {
             currentAllowance >= _amount,
             "ERC20: decreased allowance below zero"
         );
-        myProxy._approve(_owner, _spender, currentAllowance - _amount);
+        myProxy.approve(_owner, _spender, currentAllowance - _amount);
     }
 
-    /*function _multipleTransfer(
-        address[] memory _array,
-        uint256 _amount,
-        uint256 _n
-    ) private {
-        for (uint256 i = 0; i < _n; i++) {
-            myProxy.subtractFunds(_msgSender(), _amount / _n);
-            myProxy.addFunds(_array[i], _amount / _n);
-        }
-    }*/
 }

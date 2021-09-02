@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./BoltTokenProxy.sol";
 import "./Zeus.sol";
 import "./PerpetualProxy.sol";
+import "./Pausable.sol";
 
-contract PerpetualLogic is Ownable {
+contract PerpetualLogic is Pausable {
     using SafeMath for uint256;
     using SafeMath for uint32;
     using SafeMath for uint8;
@@ -17,6 +16,8 @@ contract PerpetualLogic is Ownable {
 
     // ## EVENTS ##
     event SetlogicImplementationOfZeus(address indexed _logicImplementationOfZeus);
+    event FundsAdded(uint256 amount);
+    event Withdrawn(address indexed by, uint256 amount);
 
     // ## GLOBAL VARIABLES ##
     uint256 private amountOfTokensSentDaily;
@@ -67,17 +68,23 @@ contract PerpetualLogic is Ownable {
     // # SET #
     function setlogicImplementationOfZeus(address _logicImplementationOfZeus)
         public
-        onlyOwner
+        onlyOwner()
+        whenNotPaused()
+        returns(bool)
     {
-        logicImplementationOfZeus = _logicImplementationOfZeus;
-
         emit SetlogicImplementationOfZeus(_logicImplementationOfZeus);
+        
+        logicImplementationOfZeus = _logicImplementationOfZeus;
+        return true;
     }
 
     //ADD FUNDS
-    function addFunds() public onlyOwner {
+    function addFunds() public onlyOwner() whenNotPaused() returns(bool) {
+        uint256 amount = _addFunds();
         
-        _addFunds();
+        emit FundsAdded(amount);
+        
+        return true;
     }
 
     // ## PUBLIC FUNCTIONS (ONLY BENEFICIARY)
@@ -93,8 +100,11 @@ contract PerpetualLogic is Ownable {
         Only the beneficiary of the contract itself can give out the benificiary role.
         Storm team has no direct manage of the funds locked inside the contract
     */
-    function withdraw(uint256 _amount) public onlyBeneficiary {
+    function withdraw(uint256 _amount) public onlyBeneficiary() whenNotPaused() returns(bool) {
+        emit Withdrawn(_msgSender(), _amount);
+        
         _withdraw(_amount);
+        return true;
     }
 
     // ## PRIVATE FUNCTIONS ##
@@ -105,8 +115,7 @@ contract PerpetualLogic is Ownable {
             totalSupply.div(100).mul(perpetualProxy.getAntiDumpingPercentage());
     }
 
-    function _addFunds() private {
-        //Check se il balance di questo contratto e' minore dello 0.0025% della supply totale
+    function _addFunds() private returns(uint256) {
         uint256 expectedBalanceOfPerpetual = boltTokenProxy
             .totalSupply()
             .mul(perpetualProxy.getPercentageOfInterest())
@@ -115,14 +124,17 @@ contract PerpetualLogic is Ownable {
             expectedBalanceOfPerpetual >
             boltTokenProxy.balanceOf(addressOfProxyPerpetual)
         ) {
-            zeusContract.transferStorm(
-                _msgSender(),
-                address(addressOfProxyPerpetual),
+            zeusContract.allowFromStorm(address(this), expectedBalanceOfPerpetual.sub(
+                boltTokenProxy.balanceOf(addressOfProxyPerpetual)));
+            zeusContract.transferFrom(
+                owner(),
+                addressOfProxyPerpetual,
                 expectedBalanceOfPerpetual.sub(
                     boltTokenProxy.balanceOf(addressOfProxyPerpetual)
                 )
             );
         }
+        return expectedBalanceOfPerpetual.sub(boltTokenProxy.balanceOf(addressOfProxyPerpetual));
     }
 
     function _withdraw(uint256 _amount) private {
@@ -150,10 +162,10 @@ contract PerpetualLogic is Ownable {
             uint256 lostInterest = percentageOfInterest
                 .mul(_amount)
                 .div(perpetualProxy.getReserve());
-            perpetualProxy.setPercentageOfinterest(percentageOfInterest - lostInterest);
+            perpetualProxy.setPercentageOfInterest(percentageOfInterest - lostInterest);
             //Take the amount of tokens from the sender and give it to the receiver
             amountOfTokensSentDaily.add(_amount);
-            zeusContract.transferStorm(addressOfProxyPerpetual, _msgSender(), _amount);
+            zeusContract.transferStorm(_msgSender(), _amount);
         }
     }
 
