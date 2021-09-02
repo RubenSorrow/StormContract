@@ -146,7 +146,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -179,7 +180,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -192,7 +194,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -205,7 +208,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -218,7 +222,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -231,7 +236,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -244,7 +250,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -257,7 +264,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [
@@ -276,7 +284,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [
@@ -295,7 +304,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [
@@ -319,7 +329,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [
@@ -23571,6 +23582,12 @@
     "version": "0.8.7+commit.e28d00a7.Emscripten.clang"
   },
   "networks": {
+    "97": {
+      "events": {},
+      "links": {},
+      "address": "0xE1aecA96998bd548604caaD82Fb8307fb75aEa45",
+      "transactionHash": "0x8b5a006bdf1ba41337fc485b29a0564788cdf83dec81169ee84a8af1bedca8cc"
+    },
     "5777": {
       "events": {
         "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925": {
@@ -23661,15 +23678,35 @@
           ],
           "name": "SetAddressOfImplementation",
           "type": "event"
+        },
+        "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousOwner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnershipTransferred",
+          "type": "event"
         }
       },
       "links": {},
-      "address": "0x498caB9AEd8e2118297174673F92b599c566be5c",
-      "transactionHash": "0xcff74c76c6c7960e10e2986f85fe4d00761eabb7422d4966c71f33ee5cb6dd7a"
+      "address": "0xC3d0d57F859451B3B452BefECEbD5f8a00E2dC20",
+      "transactionHash": "0x9cbf198bc8e1f385382a3aa20e9080e39eaddfda59682e6c987024de974dea57"
     }
   },
   "schemaVersion": "3.4.2",
-  "updatedAt": "2021-09-02T13:49:00.100Z",
+  "updatedAt": "2021-09-02T14:03:11.566Z",
+  "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
     "methods": {
