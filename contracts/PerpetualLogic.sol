@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 import "./BoltTokenProxy.sol";
 import "./Zeus.sol";
 import "./PerpetualProxy.sol";
@@ -10,9 +9,6 @@ import "./Pausable.sol";
 
 contract PerpetualLogic is Pausable {
     using SafeMath for uint256;
-    using SafeMath for uint32;
-    using SafeMath for uint8;
-    using Address for address;
 
     // ## EVENTS ##
     event SetlogicImplementationOfZeus(address indexed _logicImplementationOfZeus);
@@ -22,7 +18,6 @@ contract PerpetualLogic is Pausable {
     // ## GLOBAL VARIABLES ##
     uint256 private amountOfTokensSentDaily;
     uint256 private lastTimestamp;
-    bool private didSendTokenToday = false;
     address private addressOfProxyBolt;
     address private logicImplementationOfZeus;
     address private addressOfProxyPerpetual;
@@ -171,6 +166,5 @@ contract PerpetualLogic is Pausable {
 
     function start24HTimer() private {
         lastTimestamp = getTimeStamp();
-        didSendTokenToday = true;
     }
 }

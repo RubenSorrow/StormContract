@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-//Check veloce delle ownership
-//Mintare una quantita', fare addFund, controllare che quanto ha l'admin sia giusta, controllare che
-//la percentuale mintata sia giusta
-//Controllo del withdraw
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "./BoltTokenProxy.sol";
 
 contract PerpetualProxy is Ownable {
     using SafeMath for uint256;
+    using Address for address;
 
     // ## EVENTS ##
     event SetPercentageOfInterest(uint256 _percentageOfInterest);
@@ -35,6 +33,7 @@ contract PerpetualProxy is Ownable {
 
     modifier onlyLogicContract() {
         require(_msgSender() == addressOfLogicImplementation);
+        require(_msgSender().isContract(), "The sender is not a contract");
         _;
     }
 

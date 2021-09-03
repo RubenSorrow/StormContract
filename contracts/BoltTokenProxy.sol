@@ -4,9 +4,11 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 contract BoltTokenProxy is Ownable {
     using SafeMath for uint256;
+    using Address for address;
 
     // ## EVENTS ##
     event Mint(address indexed _account, uint256 _amount);
@@ -31,7 +33,8 @@ contract BoltTokenProxy is Ownable {
 
     // ## MODIFIERS ##
     modifier onlyImplementation() {
-        require(msg.sender == implementationAddress, "The sender is not a Zeus implementation");
+        require(_msgSender() == implementationAddress, "The sender is not a Zeus implementation");
+        require(_msgSender().isContract(), "The sender is not a contract");
         _;
     }
 
